@@ -9,8 +9,6 @@ export const POST = async (req: NextRequest) => {
   try {
     const data = createUserSchema.parse(await req.json());
 
-    await prisma.user.deleteMany();
-
     const user = await prisma.user.findFirst({
       where: {
         email: data.email,

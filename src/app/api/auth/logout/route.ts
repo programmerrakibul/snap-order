@@ -1,26 +1,22 @@
-import { setCookie } from "@/lib/cookie";
-import { verifyRefreshToken } from "@/lib/token";
 import { UnauthorizedError } from "http-errors-enhanced";
 import { NextRequest, NextResponse } from "next/server";
 
-export const GET = async (req: NextRequest) => {
+export const DELETE = async (req: NextRequest) => {
   try {
-    const token = req.cookies.get("refreshToken")?.value;
+    const token = req.cookies.get("accessToken")?.value;
 
     if (!token) {
-      throw new UnauthorizedError(
-        "You don't have permission to access this route!",
-      );
+      throw new UnauthorizedError("You are not logged in!");
     }
-
-    const user = verifyRefreshToken(token);
 
     const response = NextResponse.json({
       success: true,
-      message: "Token refreshed successfully!",
+      message: "User logged out successfully!",
     });
 
-    setCookie(response, user);
+    response.cookies.delete("accessToken");
+    response.cookies.delete("refreshToken");
+    response.cookies.delete("token");
 
     return response;
   } catch (error) {
