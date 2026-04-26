@@ -55,3 +55,8 @@ export const createUserSchema = z.object({
     }, RoleEnum)
     .default(Role.USER),
 });
+
+export const loginUserSchema = createUserSchema.pick({
+  email: true,
+  password: true,
+});
