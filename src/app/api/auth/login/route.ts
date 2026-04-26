@@ -1,11 +1,8 @@
-import { getEnv } from "@/lib/env";
+import { setCookie } from "@/lib/cookie";
 import { comparePassword } from "@/lib/password";
 import prisma from "@/lib/prisma";
-import { getAccessToken, getRefreshToken } from "@/lib/token";
-import { NODE_ENV } from "@/schemas/env";
 import { loginUserSchema } from "@/schemas/user";
 import { UnauthorizedError } from "http-errors-enhanced";
-import { ResponseCookie } from "next/dist/compiled/@edge-runtime/cookies";
 import { NextRequest, NextResponse } from "next/server";
 
 export const POST = async (req: NextRequest) => {
@@ -43,35 +40,7 @@ export const POST = async (req: NextRequest) => {
       message: "User logged in successfully!",
     });
 
-    const accessToken = getAccessToken(user);
-    const refreshToken = getRefreshToken(user);
-    const inProduction = getEnv().NODE_ENV === NODE_ENV.PRODUCTION;
-
-    const cookieData: Pick<
-      ResponseCookie,
-      "httpOnly" | "secure" | "sameSite" | "path"
-    > = {
-      httpOnly: true,
-      secure: inProduction,
-      sameSite: inProduction ? "none" : "lax",
-      path: "/",
-    };
-
-    response.cookies.set({
-      name: "accessToken",
-      value: accessToken,
-      expires: new Date(Date.now() + 60 * 60 * 24 * 7 * 1000),
-      maxAge: 60 * 60 * 24 * 7,
-      ...cookieData,
-    });
-
-    response.cookies.set({
-      name: "refreshToken",
-      value: refreshToken,
-      expires: new Date(Date.now() + 60 * 60 * 24 * 7 * 1000),
-      maxAge: 60 * 60 * 24 * 7,
-      ...cookieData,
-    });
+    setCookie(response, user);
 
     return response;
   } catch (error: unknown) {

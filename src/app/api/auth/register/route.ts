@@ -1,3 +1,4 @@
+import { setCookie } from "@/lib/cookie";
 import { hashPassword } from "@/lib/password";
 import prisma from "@/lib/prisma";
 import { createUserSchema } from "@/schemas/user";
@@ -7,6 +8,8 @@ import { NextRequest, NextResponse } from "next/server";
 export const POST = async (req: NextRequest) => {
   try {
     const data = createUserSchema.parse(await req.json());
+
+    await prisma.user.deleteMany();
 
     const user = await prisma.user.findFirst({
       where: {
@@ -20,14 +23,18 @@ export const POST = async (req: NextRequest) => {
 
     data.password = await hashPassword(data.password);
 
-    await prisma.user.create({
+    const result = await prisma.user.create({
       data,
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       message: "User registered successfully!",
     });
+
+    setCookie(response, result);
+
+    return response;
   } catch (error: unknown) {
     console.error(error);
 
