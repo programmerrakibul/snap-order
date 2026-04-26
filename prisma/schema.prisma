@@ -28,9 +28,11 @@ model User {
   photoURL    String?
   phoneNumber String?
   role        Role     @default(USER)
+  isVerified  Boolean  @default(false)
   orders      Order[]
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime @default(now()) @updatedAt
+  lastLoggedIn   DateTime @default(now()) 
 
   @@index([email])
   @@index([createdAt])

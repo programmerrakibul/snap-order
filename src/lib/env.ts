@@ -8,6 +8,8 @@ export const getEnv = () => {
   if (!result.success) {
     const fieldErrors = z.flattenError(result.error).fieldErrors;
 
+    console.error(result.error);
+
     throw new BadRequestError("Invalid environment variables!", fieldErrors);
   }
 

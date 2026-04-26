@@ -35,7 +35,8 @@ export const envSchema = z.object({
     })
     .trim()
     .min(1, "DATABASE_URL is required")
-    .startsWith("postgresql://", "DATABASE_URL is invalid"),
+    .startsWith("postgres://", "DATABASE_URL is invalid")
+    .includes("sslmode=require", "DATABASE_URL is invalid"),
 
   ACCESS_TOKEN_SECRET: z
     .string({
