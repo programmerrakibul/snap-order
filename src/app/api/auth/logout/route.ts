@@ -16,7 +16,6 @@ export const DELETE = async (req: NextRequest) => {
 
     response.cookies.delete("accessToken");
     response.cookies.delete("refreshToken");
-    response.cookies.delete("token");
 
     return response;
   } catch (error) {

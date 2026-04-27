@@ -1,11 +1,15 @@
+"use server";
+
 import { ResponseCookie } from "next/dist/compiled/@edge-runtime/cookies";
-import { NextResponse } from "next/server";
-import { getAccessToken, getRefreshToken } from "./token";
-import { getEnv } from "./env";
+import { getAccessToken, getRefreshToken } from "../../lib/token";
+import { getEnv } from "../../lib/env";
 import { NODE_ENV } from "@/schemas/env";
 import { ITokenUser } from "@/types/user.interface";
+import { cookies } from "next/headers";
 
-export const setCookie = (response: NextResponse, user: ITokenUser) => {
+export const setCookie = async (user: ITokenUser) => {
+  const cookieStore = await cookies();
+
   const payload = {
     id: user.id,
     email: user.email,
@@ -27,7 +31,7 @@ export const setCookie = (response: NextResponse, user: ITokenUser) => {
     path: "/",
   };
 
-  response.cookies.set({
+  cookieStore.set({
     name: "accessToken",
     value: accessToken,
     expires: new Date(Date.now() + 60 * 60 * 24 * 7 * 1000),
@@ -35,13 +39,11 @@ export const setCookie = (response: NextResponse, user: ITokenUser) => {
     ...cookieData,
   });
 
-  response.cookies.set({
+  cookieStore.set({
     name: "refreshToken",
     value: refreshToken,
     expires: new Date(Date.now() + 60 * 60 * 24 * 7 * 1000),
     maxAge: 60 * 60 * 24 * 7,
     ...cookieData,
   });
-
-  return response;
 };

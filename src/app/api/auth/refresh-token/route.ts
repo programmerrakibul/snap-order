@@ -1,4 +1,4 @@
-import { setCookie } from "@/lib/cookie";
+import { setCookie } from "@/actions/server/cookie";
 import { verifyRefreshToken } from "@/lib/token";
 import { UnauthorizedError } from "http-errors-enhanced";
 import { NextRequest, NextResponse } from "next/server";
@@ -15,14 +15,12 @@ export const GET = async (req: NextRequest) => {
 
     const user = verifyRefreshToken(token);
 
-    const response = NextResponse.json({
+    await setCookie(user);
+
+    return NextResponse.json({
       success: true,
       message: "Token refreshed successfully!",
     });
-
-    setCookie(response, user);
-
-    return response;
   } catch (error) {
     console.error(error);
 

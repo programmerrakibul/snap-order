@@ -1,4 +1,4 @@
-import { setCookie } from "@/lib/cookie";
+import { setCookie } from "@/actions/server/cookie";
 import { hashPassword } from "@/lib/password";
 import prisma from "@/lib/prisma";
 import { createUserSchema } from "@/schemas/user";
@@ -25,14 +25,12 @@ export const POST = async (req: NextRequest) => {
       data,
     });
 
-    const response = NextResponse.json({
+    await setCookie(result);
+
+    return NextResponse.json({
       success: true,
       message: "User registered successfully!",
     });
-
-    setCookie(response, result);
-
-    return response;
   } catch (error: unknown) {
     console.error(error);
 

@@ -1,4 +1,4 @@
-import { setCookie } from "@/lib/cookie";
+import { setCookie } from "@/actions/server/cookie";
 import { comparePassword } from "@/lib/password";
 import prisma from "@/lib/prisma";
 import { loginUserSchema } from "@/schemas/user";
@@ -40,7 +40,7 @@ export const POST = async (req: NextRequest) => {
       message: "User logged in successfully!",
     });
 
-    setCookie(response, user);
+    await setCookie(user);
 
     return response;
   } catch (error: unknown) {
