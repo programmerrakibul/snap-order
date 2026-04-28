@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Figtree } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "sonner";
+import SessionProvider from "@/providers/session-provider";
 
 const geistMonoHeading = Geist_Mono({
   subsets: ["latin"],
@@ -47,7 +48,9 @@ export default function RootLayout({
         geistMonoHeading.variable,
       )}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <SessionProvider>{children}</SessionProvider>
+      </body>
       <Toaster />
     </html>
   );

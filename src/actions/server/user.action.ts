@@ -6,6 +6,7 @@ import prisma from "@/lib/prisma";
 import { comparePassword, hashPassword } from "@/lib/password";
 import { ConflictError, UnauthorizedError } from "http-errors-enhanced";
 import { setCookie } from "./cookie";
+import { isAuthenticated } from "./isAuthenticated";
 
 export const createUser = async (formData: FormData) => {
   try {
@@ -59,6 +60,13 @@ export const loginUser = async (payload: TLoginUser) => {
       where: {
         email,
       },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        role: true,
+        isVerified: true,
+      },
     });
 
     if (!user) {
@@ -87,6 +95,30 @@ export const loginUser = async (payload: TLoginUser) => {
       success: true,
       message: "Login successful! Welcome back!",
     };
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const getUserData = async () => {
+  try {
+    const { id, email } = await isAuthenticated();
+
+    if (!id || !email) throw new UnauthorizedError("You are not logged in!");
+
+    const user = await prisma.user.findFirst({
+      where: {
+        id,
+        email,
+      },
+      omit: {
+        password: true,
+      },
+    });
+
+    if (!user) throw new UnauthorizedError("You are not logged in!");
+
+    return user;
   } catch (error: unknown) {
     throw error;
   }

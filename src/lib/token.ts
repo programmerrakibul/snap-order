@@ -7,6 +7,7 @@ import jwt, {
   type SignOptions,
 } from "jsonwebtoken";
 import { getEnv } from "./env";
+import prisma from "./prisma";
 
 type IGenToken = {
   payload: ITokenUser;
@@ -77,7 +78,10 @@ export const getRefreshToken = (payload: ITokenUser): string => {
   }
 };
 
-export const verifyToken = (token: string, secret: Secret): ITokenUser => {
+export const verifyToken = async (
+  token: string,
+  secret: Secret,
+): Promise<ITokenUser> => {
   try {
     if (!token) {
       throw new BadRequestError("Token is required!");
@@ -87,34 +91,57 @@ export const verifyToken = (token: string, secret: Secret): ITokenUser => {
       throw new BadRequestError("Secret is required!");
     }
 
-    const result = jwt.verify(token, secret) as JwtPayload | ITokenUser;
+    const result = jwt.verify(token, secret) as JwtPayload;
+
+    if (!result?.id) {
+      throw new BadRequestError("Invalid token!");
+    }
+
+    const user = await prisma.user.findFirst({
+      where: {
+        id: result.id,
+        email: result.email,
+      },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        isVerified: true,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestError("Invalid token!");
+    }
 
     return {
-      id: result.id,
-      email: result.email,
-      role: result.role,
-      isVerified: result.isVerified,
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      isVerified: user.isVerified,
     };
   } catch (error: unknown) {
     throw error;
   }
 };
 
-export const verifyAccessToken = (token: string): ITokenUser => {
+export const verifyAccessToken = async (token: string): Promise<ITokenUser> => {
   try {
     const secret = getEnv().ACCESS_TOKEN_SECRET;
 
-    return verifyToken(token, secret);
+    return await verifyToken(token, secret);
   } catch (error: unknown) {
     throw error;
   }
 };
 
-export const verifyRefreshToken = (token: string): ITokenUser => {
+export const verifyRefreshToken = async (
+  token: string,
+): Promise<ITokenUser> => {
   try {
     const secret = getEnv().REFRESH_TOKEN_SECRET;
 
-    return verifyToken(token, secret);
+    return await verifyToken(token, secret);
   } catch (error: unknown) {
     throw error;
   }
