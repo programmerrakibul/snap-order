@@ -1,10 +1,10 @@
 "use server";
 
-import { createUserSchema } from "@/schemas/user";
+import { createUserSchema, loginUserSchema, TLoginUser } from "@/schemas/user";
 import { uploadToCloudinary } from "./uploadToCloudinary";
 import prisma from "@/lib/prisma";
-import { hashPassword } from "@/lib/password";
-import { ConflictError } from "http-errors-enhanced";
+import { comparePassword, hashPassword } from "@/lib/password";
+import { ConflictError, UnauthorizedError } from "http-errors-enhanced";
 import { setCookie } from "./cookie";
 
 export const createUser = async (formData: FormData) => {
@@ -45,6 +45,47 @@ export const createUser = async (formData: FormData) => {
     return {
       success: true,
       message: "Registration successful!",
+    };
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const loginUser = async (payload: TLoginUser) => {
+  try {
+    const { email, password } = loginUserSchema.parse(payload);
+
+    const user = await prisma.user.findFirst({
+      where: {
+        email,
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedError("Invalid credentials!");
+    }
+
+    const isValidPassword = await comparePassword(password, user.password);
+
+    if (!isValidPassword) {
+      throw new UnauthorizedError("Invalid credentials!");
+    }
+
+    await prisma.user.update({
+      data: {
+        lastLoggedIn: new Date(),
+      },
+      where: {
+        id: user.id,
+        email: user.email,
+      },
+    });
+
+    await setCookie(user);
+
+    return {
+      success: true,
+      message: "Login successful! Welcome back!",
     };
   } catch (error: unknown) {
     throw error;

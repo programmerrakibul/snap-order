@@ -83,10 +83,12 @@ export const createUserSchema = z.object({
     ),
 });
 
-export type TCreateUserInput = z.input<typeof createUserSchema>;
-export type TCreateUserOutput = z.output<typeof createUserSchema>;
 
 export const loginUserSchema = createUserSchema.pick({
   email: true,
   password: true,
 });
+
+export type TCreateUserInput = z.input<typeof createUserSchema>;
+export type TCreateUserOutput = z.output<typeof createUserSchema>;
+export type TLoginUser = z.infer<typeof loginUserSchema>;

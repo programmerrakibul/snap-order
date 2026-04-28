@@ -1,15 +1,17 @@
 import { cn } from "@/lib/utils";
 import React from "react";
 
-interface ContainerProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-const Container = ({ children, className }: ContainerProps) => {
+const Container = ({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<"div">) => {
   return (
     <>
-      <div className={cn("w-full container mx-auto px-5 md:px-7", className)}>
+      <div
+        className={cn("w-full container mx-auto px-5 md:px-7", className)}
+        {...props}
+      >
         {children}
       </div>
     </>
