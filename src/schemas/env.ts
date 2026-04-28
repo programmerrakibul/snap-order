@@ -35,8 +35,7 @@ export const envSchema = z.object({
     })
     .trim()
     .min(1, "DATABASE_URL is required")
-    .startsWith("postgres://", "DATABASE_URL is invalid")
-    .includes("sslmode=require", "DATABASE_URL is invalid"),
+    .startsWith("postgres://", "DATABASE_URL is invalid"),
 
   ACCESS_TOKEN_SECRET: z
     .string({
@@ -59,6 +58,19 @@ export const envSchema = z.object({
     })
     .trim()
     .min(32, "ACCESS_TOKEN_SECRET must be at least 32 characters long"),
+
+  NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: z
+    .string("CLOUDINARY_CLOUD_NAME is required")
+    .min(1, "CLOUDINARY_CLOUD_NAME is required"),
+
+  CLOUDINARY_API_KEY: z
+    .string("CLOUDINARY_API_KEY is required")
+    .length(15, "API key must be exactly 15 characters")
+    .regex(/^[a-zA-Z0-9]+$/, "API key must be alphanumeric"),
+
+  CLOUDINARY_API_SECRET: z
+    .string("CLOUDINARY_API_SECRET is required")
+    .min(1, "CLOUDINARY_API_SECRET is required"),
 });
 
 export type TEnv = z.infer<typeof envSchema>;
