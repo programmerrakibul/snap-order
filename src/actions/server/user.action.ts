@@ -7,6 +7,7 @@ import { comparePassword, hashPassword } from "@/lib/password";
 import { ConflictError, UnauthorizedError } from "http-errors-enhanced";
 import { setCookie } from "./cookie";
 import { isAuthenticated } from "./isAuthenticated";
+import { cookies } from "next/headers";
 
 export const createUser = async (formData: FormData) => {
   try {
@@ -119,6 +120,29 @@ export const getUserData = async () => {
     if (!user) throw new UnauthorizedError("You are not logged in!");
 
     return user;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const logoutUser = async () => {
+  try {
+    const cookieStore = await cookies();
+
+    const token = cookieStore.get("accessToken")?.value;
+
+    if (!token)
+      throw new UnauthorizedError(
+        "You have no permission to perform this action!",
+      );
+
+    cookieStore.delete("accessToken");
+    cookieStore.delete("refreshToken");
+
+    return {
+      success: true,
+      message: "Logout successful! See you later!",
+    };
   } catch (error: unknown) {
     throw error;
   }
