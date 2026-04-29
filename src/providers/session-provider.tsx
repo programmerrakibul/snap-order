@@ -17,17 +17,20 @@ export interface TSessionContextProps {
   data: ITokenUser | null;
 }
 
-const defaultSetUser: Dispatch<SetStateAction<ITokenUser | null>> = () => null;
-
 export const SessionContext = createContext<TSessionContextProps>({
   isLoading: false,
   data: null,
-  setUser: defaultSetUser,
+  setUser: () => null,
 });
 
-const SessionProvider = ({ children }: { children: ReactNode }) => {
+interface SessionProviderProps {
+  children: ReactNode;
+  initialUser: ITokenUser | null;
+}
+
+const SessionProvider = ({ children, initialUser }: SessionProviderProps) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [user, setUser] = useState<ITokenUser | null>(null);
+  const [user, setUser] = useState<ITokenUser | null>(initialUser);
 
   useEffect(() => {
     (async () => {
