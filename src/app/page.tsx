@@ -6,7 +6,7 @@ import useSession from "@/hooks/useSession";
 import { toast } from "sonner";
 
 export default function Home() {
-  const { isLoading, data } = useSession();
+  const { isLoading, data, setUser } = useSession();
 
   if (isLoading) {
     return (
@@ -28,6 +28,7 @@ export default function Home() {
             onClick={() => {
               (async () => {
                 const { message } = await logoutUser();
+                setUser(null);
                 toast.success(message);
               })();
             }}

@@ -1,21 +1,31 @@
 "use client";
 
-import React, { useEffect } from "react";
 import { ITokenUser } from "@/types/user.interface";
-import { createContext, useState } from "react";
+import {
+  createContext,
+  useState,
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  ReactNode,
+} from "react";
 import { isAuthenticated } from "@/actions/server/isAuthenticated";
 
 export interface TSessionContextProps {
   isLoading: boolean;
+  setUser: Dispatch<SetStateAction<ITokenUser | null>>;
   data: ITokenUser | null;
 }
+
+const defaultSetUser: Dispatch<SetStateAction<ITokenUser | null>> = () => null;
 
 export const SessionContext = createContext<TSessionContextProps>({
   isLoading: false,
   data: null,
+  setUser: defaultSetUser,
 });
 
-const SessionProvider = ({ children }: { children: React.ReactNode }) => {
+const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [user, setUser] = useState<ITokenUser | null>(null);
 
@@ -37,6 +47,7 @@ const SessionProvider = ({ children }: { children: React.ReactNode }) => {
   const sessionData: TSessionContextProps = {
     isLoading,
     data: user,
+    setUser,
   };
 
   return <SessionContext value={sessionData}>{children}</SessionContext>;
