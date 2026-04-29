@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
@@ -20,18 +20,22 @@ import {
   TCreateUserOutput,
 } from "@/schemas/user";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { handleCreateUser } from "@/actions/client/user.action";
 import Link from "next/link";
+import { toast } from "sonner";
+import { getErrorResponse } from "@/lib/error";
+import { BadRequestError } from "http-errors-enhanced";
+import { createUser } from "@/actions/server/user.action";
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const {
-    handleSubmit,
-    control,
-    formState: { isLoading },
-  } = useForm<TCreateUserInput, TCreateUserOutput>({
+  const [isLoading, setIsLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const { handleSubmit, control, reset } = useForm<
+    TCreateUserInput,
+    TCreateUserOutput
+  >({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
       name: undefined,
@@ -42,12 +46,49 @@ export function SignupForm({
     },
   });
 
+  const handleCreateUser = async (data: TCreateUserInput) => {
+    try {
+      setIsLoading(true);
+
+      const formData = new FormData();
+      formData.append("email", data.email);
+      formData.append("password", data.password);
+
+      if (data.name) formData.append("name", data.name);
+      if (data.phoneNumber) formData.append("phoneNumber", data.phoneNumber);
+      if (data.photoURL) formData.append("photoURL", data.photoURL);
+
+      const { success, message } = await createUser(formData);
+
+      if (!success) throw new BadRequestError("Registration failed!");
+
+      reset({
+        name: "",
+        email: "",
+        password: "",
+        photoURL: undefined,
+        phoneNumber: "",
+      });
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
+      toast.success(message);
+    } catch (error: unknown) {
+      const { message } = getErrorResponse(error);
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
           <form
-            onSubmit={handleSubmit(handleCreateUser)}
+            onSubmit={(e) => handleSubmit(handleCreateUser)(e)}
             className="p-6 md:p-8"
           >
             <FieldGroup>
@@ -85,6 +126,7 @@ export function SignupForm({
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="photoURL">Photo</FieldLabel>
                     <Input
+                      ref={fileInputRef}
                       id="photoURL"
                       type="file"
                       accept={ACCEPTED_IMAGE_TYPES.join(", ")}
@@ -92,7 +134,7 @@ export function SignupForm({
                       disabled={isLoading}
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        onChange(file); // pass the File object
+                        onChange(file);
                       }}
                     />
                     {fieldState.invalid && (
@@ -118,7 +160,7 @@ export function SignupForm({
                       id="phoneNumber"
                       type="number"
                       aria-invalid={fieldState.invalid}
-                      placeholder="+880 123456-7890"
+                      placeholder="0123456-7890"
                       disabled={isLoading}
                       {...field}
                     />

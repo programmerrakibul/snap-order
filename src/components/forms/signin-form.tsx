@@ -15,18 +15,15 @@ import Link from "next/link";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginUserSchema, TLoginUser } from "@/schemas/user";
-import { toast } from "sonner";
-import { getErrorResponse } from "@/lib/error";
-import { loginUser } from "@/actions/server/user.action";
-import { BadRequestError } from "http-errors-enhanced";
 import { useState } from "react";
+import { handleLogin } from "@/actions/client/user.action";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const { handleSubmit, control } = useForm<TLoginUser>({
+  const { handleSubmit, control, reset } = useForm<TLoginUser>({
     resolver: zodResolver(loginUserSchema),
     defaultValues: {
       email: "",
@@ -34,27 +31,16 @@ export function LoginForm({
     },
   });
 
-  const handleLogin = async (data: TLoginUser) => {
-    try {
-      setIsLoading(true);
-      const { success, message } = await loginUser(data);
-      if (!success) throw new BadRequestError("Login failed!");
-
-      toast.success(message);
-    } catch (error: unknown) {
-      const { message } = getErrorResponse(error);
-
-      toast.error(message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form onSubmit={handleSubmit(handleLogin)} className="p-6 md:p-8">
+          <form
+            onSubmit={handleSubmit((data) =>
+              handleLogin(data, reset, setIsLoading),
+            )}
+            className="p-6 md:p-8"
+          >
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
                 <h1 className="text-2xl font-bold">Welcome back</h1>

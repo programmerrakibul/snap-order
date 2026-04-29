@@ -9,6 +9,7 @@ import { setCookie } from "./cookie";
 import { isAuthenticated } from "./isAuthenticated";
 import { User } from "@/generated/prisma/client";
 import { getAccessToken } from "./getAccessToken";
+import { cookies } from "next/headers";
 
 export const createUser = async (formData: FormData) => {
   try {
@@ -134,7 +135,8 @@ export const getUserData = async (): Promise<Omit<User, "password">> => {
 
 export const logoutUser = async () => {
   try {
-    const token = await getAccessToken();
+    const cookieStore = await cookies();
+    const token = cookieStore.get("accessToken")?.value;
 
     if (!token)
       throw new UnauthorizedError(
