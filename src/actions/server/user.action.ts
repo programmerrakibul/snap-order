@@ -7,7 +7,8 @@ import { comparePassword, hashPassword } from "@/lib/password";
 import { ConflictError, UnauthorizedError } from "http-errors-enhanced";
 import { setCookie } from "./cookie";
 import { isAuthenticated } from "./isAuthenticated";
-import { cookies } from "next/headers";
+import { User } from "@/generated/prisma/client";
+import { getAccessToken } from "./getAccessToken";
 
 export const createUser = async (formData: FormData) => {
   try {
@@ -39,6 +40,12 @@ export const createUser = async (formData: FormData) => {
         password: data.password,
         photoURL: photoURL,
         phoneNumber: data.phoneNumber,
+      },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        isVerified: true,
       },
     });
 
@@ -101,16 +108,16 @@ export const loginUser = async (payload: TLoginUser) => {
   }
 };
 
-export const getUserData = async () => {
+export const getUserData = async (): Promise<Omit<User, "password">> => {
   try {
-    const { id, email } = await isAuthenticated();
+    const data = await isAuthenticated();
 
-    if (!id || !email) throw new UnauthorizedError("You are not logged in!");
+    if (!data) throw new UnauthorizedError("You are not logged in!");
 
     const user = await prisma.user.findFirst({
       where: {
-        id,
-        email,
+        id: data.id,
+        email: data.email,
       },
       omit: {
         password: true,
@@ -127,9 +134,7 @@ export const getUserData = async () => {
 
 export const logoutUser = async () => {
   try {
-    const cookieStore = await cookies();
-
-    const token = cookieStore.get("accessToken")?.value;
+    const token = await getAccessToken();
 
     if (!token)
       throw new UnauthorizedError(

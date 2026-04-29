@@ -6,9 +6,12 @@ import { TokenExpiredError } from "jsonwebtoken";
 import { refreshToken } from "./refreshToken";
 import { getAccessToken } from "./getAccessToken";
 
-export const isAuthenticated = async (): Promise<ITokenUser> => {
+export const isAuthenticated = async (): Promise<ITokenUser | null> => {
   try {
     const token = await getAccessToken();
+
+    if (!token) return null;
+
     const user = await verifyAccessToken(token);
 
     return user;
@@ -18,10 +21,12 @@ export const isAuthenticated = async (): Promise<ITokenUser> => {
 
       const newAccessToken = await getAccessToken();
 
+      if (!newAccessToken) return null;
+
       const user = await verifyAccessToken(newAccessToken);
       return user;
     }
 
-    throw error;
+    return null;
   }
 };
