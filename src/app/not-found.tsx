@@ -3,22 +3,22 @@ import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
   return (
-    <section className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
-      <h1 className="mt-4 font-medium text-[2.5rem]/none tracking-[-0.02em]">
-        Page not found
-      </h1>
-      <p className="mt-6 max-w-sm text-muted-foreground">
-        Sorry, we couldn&apos;t find the page you&apos;re looking for. It may
-        have been moved or deleted.
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6 text-center">
+      <p className="pointer-events-none absolute inset-0 flex select-none items-center justify-center font-black text-[40vw] text-foreground/2 leading-none">
+        404
       </p>
-      <div className="mt-10 flex gap-3">
-        <Button asChild>
-          <Link href="/">Go home</Link>
-        </Button>
-        <Button asChild variant="outline">
-          <Link href="/contact">Contact support</Link>
-        </Button>
+      <div className="relative z-10">
+        <h1 className="font-medium text-4xl/none tracking-tight">
+          Page not found
+        </h1>
+        <p className="mx-auto mt-5 max-w-sm text-lg text-muted-foreground">
+          The page you&apos;re looking for doesn&apos;t exist or may have been
+          moved.
+        </p>
+          <Button size="lg" asChild className="mt-8">
+            <Link href="/">Go home</Link>
+          </Button>
       </div>
-    </section>
+    </div>
   );
 }
