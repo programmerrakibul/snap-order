@@ -16,7 +16,10 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginUserSchema, TLoginUser } from "@/schemas/user";
 import { useState } from "react";
-import { handleLogin } from "@/actions/client/user.action";
+import { loginUser } from "@/actions/server/user.action";
+import { toast } from "sonner";
+import { getErrorResponse } from "@/lib/error";
+import { BadRequestError } from "http-errors-enhanced";
 
 export function LoginForm({
   className,
@@ -31,16 +34,28 @@ export function LoginForm({
     },
   });
 
+  const handleLogin = async (data: TLoginUser) => {
+    try {
+      setIsLoading(true);
+      const { success, message } = await loginUser(data);
+
+      if (!success) throw new BadRequestError("Login failed!");
+
+      reset();
+      toast.success(message);
+    } catch (error: unknown) {
+      const { message } = getErrorResponse(error);
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form
-            onSubmit={handleSubmit((data) =>
-              handleLogin(data, reset, setIsLoading),
-            )}
-            className="p-6 md:p-8"
-          >
+          <form onSubmit={handleSubmit(handleLogin)} className="p-6 md:p-8">
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
                 <h1 className="text-2xl font-bold">Welcome back</h1>

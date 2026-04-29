@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
@@ -22,9 +22,9 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { toast } from "sonner";
-import { getErrorResponse } from "@/lib/error";
-import { BadRequestError } from "http-errors-enhanced";
 import { createUser } from "@/actions/server/user.action";
+import { BadRequestError } from "http-errors-enhanced";
+import { getErrorResponse } from "@/lib/error";
 
 export function SignupForm({
   className,
@@ -76,7 +76,7 @@ export function SignupForm({
 
       toast.success(message);
     } catch (error: unknown) {
-      const { message } = getErrorResponse(error);
+      const {message} = getErrorResponse(error);
       toast.error(message);
     } finally {
       setIsLoading(false);

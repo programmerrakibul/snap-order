@@ -15,6 +15,8 @@ export const getErrorResponse = (error: unknown): TErrorResponse => {
     message = error.message;
   }
 
+  if (error instanceof Error) message = error.message;
+
   return {
     success: false,
     message,

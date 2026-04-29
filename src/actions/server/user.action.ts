@@ -4,12 +4,16 @@ import { createUserSchema, loginUserSchema, TLoginUser } from "@/schemas/user";
 import { uploadToCloudinary } from "./uploadToCloudinary";
 import prisma from "@/lib/prisma";
 import { comparePassword, hashPassword } from "@/lib/password";
-import { ConflictError, UnauthorizedError } from "http-errors-enhanced";
+import {
+  BadRequestError,
+  ConflictError,
+  UnauthorizedError,
+} from "http-errors-enhanced";
 import { setCookie } from "./cookie";
 import { isAuthenticated } from "./isAuthenticated";
 import { User } from "@/generated/prisma/client";
-import { getAccessToken } from "./getAccessToken";
 import { cookies } from "next/headers";
+import { getErrorResponse } from "@/lib/error";
 
 export const createUser = async (formData: FormData) => {
   try {
@@ -57,7 +61,8 @@ export const createUser = async (formData: FormData) => {
       message: "Registration successful!",
     };
   } catch (error: unknown) {
-    throw error;
+    const { message } = getErrorResponse(error);
+    throw new Error(message);
   }
 };
 
@@ -79,13 +84,13 @@ export const loginUser = async (payload: TLoginUser) => {
     });
 
     if (!user) {
-      throw new UnauthorizedError("Invalid credentials!");
+      throw new BadRequestError("Invalid credentials!");
     }
 
     const isValidPassword = await comparePassword(password, user.password);
 
     if (!isValidPassword) {
-      throw new UnauthorizedError("Invalid credentials!");
+      throw new BadRequestError("Invalid credentials!");
     }
 
     await prisma.user.update({
@@ -105,7 +110,9 @@ export const loginUser = async (payload: TLoginUser) => {
       message: "Login successful! Welcome back!",
     };
   } catch (error: unknown) {
-    throw error;
+    const { message } = getErrorResponse(error);
+
+    throw new Error(message);
   }
 };
 
@@ -129,7 +136,8 @@ export const getUserData = async (): Promise<Omit<User, "password">> => {
 
     return user;
   } catch (error: unknown) {
-    throw error;
+    const { message } = getErrorResponse(error);
+    throw new Error(message);
   }
 };
 
@@ -151,6 +159,7 @@ export const logoutUser = async () => {
       message: "Logout successful! See you later!",
     };
   } catch (error: unknown) {
-    throw error;
+    const { message } = getErrorResponse(error);
+    throw new Error(message);
   }
 };
