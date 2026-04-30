@@ -19,6 +19,7 @@ import {
   IconLogout,
   IconReceipt,
 } from "@tabler/icons-react";
+import useUserData from "@/hooks/useUserData";
 
 type Props = {
   trigger: ReactElement;
@@ -51,6 +52,10 @@ const LOGOUT_ITEM: MenuItem = {
 const itemClass = "px-4 py-2.5 text-base cursor-pointer gap-3";
 
 const ProfileDropdown = ({ trigger, defaultOpen, align = "end" }: Props) => {
+  const data = useUserData();
+
+  console.log(data);
+
   return (
     <DropdownMenu defaultOpen={defaultOpen}>
       <DropdownMenuTrigger>{trigger}</DropdownMenuTrigger>
@@ -62,8 +67,10 @@ const ProfileDropdown = ({ trigger, defaultOpen, align = "end" }: Props) => {
             <div className="relative">
               <Avatar className="size-10">
                 <AvatarImage
-                  src="https://images.shadcnspace.com/assets/profiles/user-11.jpg"
-                  alt="David McMichael"
+                  src={
+                    "https://res.cloudinary.com/dqh5dajig/image/upload/v1777525265/4eb2ad02c9358d515cfa9a8cc6eb52dc_orubcs.jpg"
+                  }
+                  alt={data?.email}
                 />
                 <AvatarFallback>DM</AvatarFallback>
               </Avatar>
@@ -75,7 +82,7 @@ const ProfileDropdown = ({ trigger, defaultOpen, align = "end" }: Props) => {
                 David McMichael
               </span>
               <span className="text-muted-foreground text-sm">
-                david.mcmichael@example.com
+                {data?.email}
               </span>
             </div>
           </DropdownMenuLabel>

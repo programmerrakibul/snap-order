@@ -11,9 +11,9 @@ import {
 } from "http-errors-enhanced";
 import { setCookie } from "./cookie";
 import { isAuthenticated } from "./isAuthenticated";
-import { User } from "@/generated/prisma/client";
 import { cookies } from "next/headers";
 import { getErrorResponse } from "@/lib/error";
+import { TUser } from "@/types/user.interface";
 
 export const createUser = async (formData: FormData) => {
   try {
@@ -116,11 +116,11 @@ export const loginUser = async (payload: TLoginUser) => {
   }
 };
 
-export const getUserData = async (): Promise<Omit<User, "password">> => {
+export const getUserData = async (): Promise<TUser | null> => {
   try {
     const data = await isAuthenticated();
 
-    if (!data) throw new UnauthorizedError("You are not logged in!");
+    if (!data) return null;
 
     const user = await prisma.user.findFirst({
       where: {
@@ -132,12 +132,11 @@ export const getUserData = async (): Promise<Omit<User, "password">> => {
       },
     });
 
-    if (!user) throw new UnauthorizedError("You are not logged in!");
+    if (!user) return null;
 
     return user;
-  } catch (error: unknown) {
-    const { message } = getErrorResponse(error);
-    throw new Error(message);
+  } catch {
+    return null;
   }
 };
 

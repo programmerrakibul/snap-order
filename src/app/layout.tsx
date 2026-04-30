@@ -3,8 +3,8 @@ import { Geist, Geist_Mono, Figtree } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "sonner";
-import SessionProvider from "@/providers/session-provider";
-import { isAuthenticated } from "@/actions/server/isAuthenticated";
+import UserProvider from "@/providers/user-provider";
+import { getUserData } from "@/actions/server/user.action";
 
 const geistMonoHeading = Geist_Mono({
   subsets: ["latin"],
@@ -36,7 +36,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const user = await isAuthenticated();
+  const user = await getUserData();
 
   return (
     <html
@@ -52,9 +52,9 @@ export default async function RootLayout({
       )}
       suppressHydrationWarning
     >
-      <SessionProvider initialUser={user}>
+      <UserProvider initialUser={user}>
         <body className="min-h-full flex flex-col">{children}</body>
-      </SessionProvider>
+      </UserProvider>
       <Toaster />
     </html>
   );
