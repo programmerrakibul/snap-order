@@ -1,3 +1,4 @@
+import DashboardSidebar from "@/components/shared/sidebar";
 import DashboardTopbar from "@/components/shared/topbar";
 
 export default function DashboardLayout({
@@ -8,7 +9,10 @@ export default function DashboardLayout({
   return (
     <>
       <DashboardTopbar />
-      <main>{children}</main>
+      <div className="flex gap-7">
+        <DashboardSidebar />
+        <main>{children}</main>
+      </div>
     </>
   );
 }

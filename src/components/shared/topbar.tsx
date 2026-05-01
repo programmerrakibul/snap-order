@@ -18,10 +18,10 @@ import useUserData from "@/hooks/useUserData";
 
 const DashboardTopbar = () => {
   const data = useUserData();
-  
+
   return (
     <header className="bg-card sticky top-0 z-50 border-b">
-      <Container className="flex items-center justify-between gap-6">
+      <Container className="flex items-center justify-between gap-6 px-6 lg:px-8">
         <div className="flex items-center gap-4">
           <a href="#">
             <img
