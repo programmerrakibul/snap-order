@@ -7,12 +7,17 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <DashboardTopbar />
-      <div className="flex gap-7">
-        <DashboardSidebar />
-        <main>{children}</main>
+    <div className="flex min-h-screen">
+      <DashboardSidebar />
+
+      {/* Main Content Area with dynamic margin */}
+      <div
+        className="flex-1 transition-all duration-300 data-[collapsed=true]:lg:ml-20"
+        style={{ "--sidebar-width": "80px" } as unknown as React.CSSProperties}
+      >
+        <DashboardTopbar />
+        <main className="p-y6 lg:py-8">{children}</main>
       </div>
-    </>
+    </div>
   );
 }
