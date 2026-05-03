@@ -1,5 +1,7 @@
-import DashboardSidebar from "@/components/shared/sidebar";
-import DashboardTopbar from "@/components/shared/topbar";
+import { AppSidebar } from "@/components/shared/app-sidebar";
+import { SiteHeader } from "@/components/shared/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default function DashboardLayout({
   children,
@@ -7,17 +9,21 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen">
-      <DashboardSidebar />
-
-      {/* Main Content Area with dynamic margin */}
-      <div
-        className="flex-1 transition-all duration-300 data-[collapsed=true]:lg:ml-20"
-        style={{ "--sidebar-width": "80px" } as unknown as React.CSSProperties}
-      >
-        <DashboardTopbar />
-        <main className="p-y6 lg:py-8">{children}</main>
-      </div>
-    </div>
+    <SidebarProvider
+      style={
+        {
+          "--sidebar-width": "calc(var(--spacing) * 72)",
+          "--header-height": "calc(var(--spacing) * 12)",
+        } as React.CSSProperties
+      }
+    >
+      <TooltipProvider>
+        <AppSidebar variant="inset" />
+        <SidebarInset>
+          <SiteHeader />
+          {children}
+        </SidebarInset>
+      </TooltipProvider>
+    </SidebarProvider>
   );
 }
