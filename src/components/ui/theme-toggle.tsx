@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { IconMoon, IconSun } from "@tabler/icons-react";
 
 export function ThemeToggle() {
-  const { setTheme } = useTheme();
+  const { themes, theme, setTheme } = useTheme();
 
   return (
     <DropdownMenu>
@@ -22,16 +23,22 @@ export function ThemeToggle() {
           <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
-          Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          System
-        </DropdownMenuItem>
+      <DropdownMenuContent
+        align="end"
+        className="data-[state=closed]:slide-out-to-left-0 data-[state=open]:slide-in-from-left-0 data-[state=closed]:slide-out-to-bottom-20 data-[state=open]:slide-in-from-bottom-20 data-[state=closed]:zoom-out-100 duration-400 "
+      >
+        <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
+          {themes.map((theme) => (
+            <DropdownMenuRadioItem
+            
+              key={theme}
+              value={theme}
+              className="capitalize"
+            >
+              {theme}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
