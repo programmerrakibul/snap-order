@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Toaster } from "sonner";
 import UserProvider from "@/providers/user-provider";
 import { getUserData } from "@/actions/server/user.action";
+import { ThemeProvider } from "@/providers/theme-provider";
 
 const geistMonoHeading = Geist_Mono({
   subsets: ["latin"],
@@ -52,9 +53,11 @@ export default async function RootLayout({
       )}
       suppressHydrationWarning
     >
-      <UserProvider initialUser={user}>
-        <body className="min-h-full flex flex-col">{children}</body>
-      </UserProvider>
+      <ThemeProvider>
+        <UserProvider initialUser={user}>
+          <body className="min-h-full flex flex-col">{children}</body>
+        </UserProvider>
+      </ThemeProvider>
       <Toaster />
     </html>
   );
