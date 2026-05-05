@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getProductById } from "@/actions/server/product.action";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +19,8 @@ interface ProductDetailModalProps {
   Trigger: React.ReactNode;
 }
 
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL;
+
 export function ProductDetailModal({
   productId,
   Trigger,
@@ -33,9 +34,17 @@ export function ProductDetailModal({
       setLoading(true);
       setError(null);
       try {
-        const data = await getProductById(productId);
+        const result = await fetch(`${BASE_URL}/api/products/${productId}`, {
+          cache: "force-cache",
+        });
 
-        setProduct(data);
+        if (!result.ok) {
+          throw new Error("Failed to load product!");
+        }
+
+        const product = (await result.json()).data as TProduct;
+
+        setProduct(product);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to load product!",
@@ -58,7 +67,6 @@ export function ProductDetailModal({
           </DialogDescription>
         </DialogHeader>
 
-
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <p className="text-muted-foreground">
@@ -72,7 +80,6 @@ export function ProductDetailModal({
         ) : product ? (
           <ScrollArea className="max-h-[calc(min(600px,80vh)-115px)] overflow-hidden">
             <div className="flex flex-col gap-6">
-              {/* Product Name */}
               <div>
                 <label className="text-sm font-semibold text-muted-foreground">
                   Product Name
@@ -82,7 +89,6 @@ export function ProductDetailModal({
 
               <Separator />
 
-              {/* Description */}
               <div>
                 <label className="text-sm font-semibold text-muted-foreground">
                   Description
@@ -94,7 +100,6 @@ export function ProductDetailModal({
 
               <Separator />
 
-              {/* Price and Stock */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <label className="text-sm font-semibold text-muted-foreground">
@@ -124,7 +129,6 @@ export function ProductDetailModal({
 
               <Separator />
 
-              {/* Dates */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <label className="text-sm font-semibold text-muted-foreground">
@@ -159,7 +163,6 @@ export function ProductDetailModal({
 
               <Separator />
 
-              {/* Product ID */}
               <div>
                 <label className="text-sm font-semibold text-muted-foreground">
                   Product ID

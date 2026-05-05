@@ -1,11 +1,15 @@
-import { getAllProducts } from "@/actions/server/product.action";
 import Container from "@/components/shared/container";
 import { ProductsTable } from "@/components/tables/products-table";
 import { TProduct } from "@/types/product.interface";
 
-async function ProductsPage() {
-  const products = (await getAllProducts()) as TProduct[];
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 
+async function ProductsPage() {
+  const res = await fetch(BASE_URL + "/api/products", {
+    cache: "force-cache",
+  });
+
+  const products = (await res.json()).data as TProduct[];
 
   return (
     <div className="space-y-8">
@@ -32,9 +36,7 @@ async function ProductsPage() {
 
           {products.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">
-                No products found.
-              </p>
+              <p className="text-muted-foreground mb-4">No products found.</p>
             </div>
           )}
         </Container>
