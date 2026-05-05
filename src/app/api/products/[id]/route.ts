@@ -4,7 +4,7 @@ import { BadRequestError } from "http-errors-enhanced";
 
 export const GET = async (
   _req: NextRequest,
-  { params }: Promise<{ params: { id: string } }>,
+  { params }: { params: Promise<{ id: string }> },
 ) => {
   try {
     const { id } = await params;
