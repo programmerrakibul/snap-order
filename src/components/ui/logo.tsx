@@ -10,6 +10,7 @@ const Logo = () => {
           alt="SnapOrder logo"
           width={160}
           height={48}
+          loading="eager"
           className="w-40 h-12 object-cover"
         />
       </Link>

@@ -93,7 +93,7 @@ export function LoginForm({
                     <Input
                       id="password"
                       type="password"
-                      placeholder="********"
+                      placeholder="••••••••"
                       aria-invalid={fieldState.invalid}
                       disabled={isLoading}
                       {...field}

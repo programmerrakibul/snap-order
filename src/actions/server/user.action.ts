@@ -122,7 +122,7 @@ export const getUserData = async (): Promise<TUser | null> => {
 
     if (!data) return null;
 
-    const user = await prisma.user.findFirst({
+    const user = await prisma.user.findUnique({
       where: {
         id: data.id,
         email: data.email,
