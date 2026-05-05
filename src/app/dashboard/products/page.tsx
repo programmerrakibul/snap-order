@@ -1,6 +1,6 @@
 import { getAllProducts } from "@/actions/server/product.action";
 import Container from "@/components/shared/container";
-import { ProductsTable } from "@/components/shared/products-table";
+import { ProductsTable } from "@/components/tables/products-table";
 import { TProduct } from "@/types/product.interface";
 
 async function ProductsPage() {

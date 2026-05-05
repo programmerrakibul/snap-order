@@ -22,26 +22,19 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { NavUser } from "./nav-user";
-import Logo from "../ui/logo";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Logo from "@/components/ui/logo";
+import ProfileDropdown from "../profile-dropdown";
 
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
-    { title: "Overview", href: "/dashboard", icon: IconLayoutDashboard },
-    { title: "Orders", href: "/dashboard/orders", icon: IconShoppingCart },
-    { title: "Products", href: "/dashboard/products", icon: IconPackage },
-    { title: "Customers", href: "/dashboard/customers", icon: IconUsers },
-    { title: "Analytics", href: "/dashboard/analytics", icon: IconChartBar },
-    { title: "Settings", href: "/dashboard/settings", icon: IconSettings },
-  ],
-};
+const sidebarItems = [
+  { title: "Overview", href: "/dashboard", icon: IconLayoutDashboard },
+  { title: "Orders", href: "/dashboard/orders", icon: IconShoppingCart },
+  { title: "Products", href: "/dashboard/products", icon: IconPackage },
+  { title: "Customers", href: "/dashboard/customers", icon: IconUsers },
+  { title: "Analytics", href: "/dashboard/analytics", icon: IconChartBar },
+  { title: "Settings", href: "/dashboard/settings", icon: IconSettings },
+];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
@@ -56,7 +49,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
-              <Logo />
+              <Logo to="/dashboard" />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -65,7 +58,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarGroup>
           <SidebarGroupContent className="flex flex-col gap-2">
             <SidebarMenu>
-              {data.navMain.map((item) => (
+              {sidebarItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
@@ -86,7 +79,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <ProfileDropdown />
       </SidebarFooter>
     </Sidebar>
   );

@@ -1,10 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const Logo = () => {
+const Logo = ({ to = "/" }: { to?: string }) => {
   return (
     <>
-      <Link href={"/"}>
+      <Link href={to}>
         <Image
           src={"/logo.png"}
           alt="SnapOrder logo"

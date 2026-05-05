@@ -6,7 +6,7 @@ import {
   DataTable,
   type DataTableColumn,
 } from "@/components/shared/data-table";
-import { ProductDetailModal } from "@/components/shared/product-detail-modal";
+import { ProductDetailModal } from "@/components/modals/product-detail-modal";
 import { TProduct } from "@/types/product.interface";
 import { IconEye, IconShoppingCart } from "@tabler/icons-react";
 
