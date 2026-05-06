@@ -20,7 +20,7 @@ export const createProduct = async (data: TProductInput) => {
       };
     }
 
-    const product = await prisma.product.create({
+    await prisma.product.create({
       data: {
         name: validatedData.name,
         description: validatedData.description,
@@ -30,13 +30,6 @@ export const createProduct = async (data: TProductInput) => {
     });
 
     revalidatePath("/dashboard/products");
-
-    console.log({
-      ...product,
-      price: Number(product.price),
-      createdAt: product.createdAt.toISOString(),
-      updatedAt: product.updatedAt.toISOString(),
-    });
 
     return {
       success: true,
