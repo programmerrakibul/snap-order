@@ -5,9 +5,9 @@ import { Metadata } from "next";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 
-export const metadata:Metadata = {
+export const metadata: Metadata = {
   title: "Products",
-}
+};
 
 async function ProductsPage() {
   const res = await fetch(BASE_URL + "/api/products", {

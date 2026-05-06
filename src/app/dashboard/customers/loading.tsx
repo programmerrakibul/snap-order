@@ -4,7 +4,7 @@ import Container from "@/components/shared/container";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-export default function ProductsLoading() {
+export default function CustomersLoading() {
   const isMobile = useIsMobile();
 
   return (
@@ -26,10 +26,9 @@ export default function ProductsLoading() {
             <div className="p-4 md:p-6 space-y-4">
               {/* Desktop Table Header */}
               <div className="flex gap-4 pb-4 border-b border-border">
-                {Array.from({ length: isMobile ? 2 : 3 }).map((_, i) => (
+                {Array.from({ length: isMobile ? 3 : 7 }).map((_, i) => (
                   <Skeleton key={i} className="h-6 flex-1" />
                 ))}
-                <Skeleton className="h-6 w-20" />
               </div>
 
               {/* Table Rows - Desktop */}
@@ -39,10 +38,9 @@ export default function ProductsLoading() {
                     key={i}
                     className="flex gap-4 py-4 border-b border-border last:border-0"
                   >
-                    {Array.from({ length: isMobile ? 2 : 3 }).map((_, i) => (
+                    {Array.from({ length: isMobile ? 3 : 7 }).map((_, i) => (
                       <Skeleton key={i} className="h-5 flex-1" />
                     ))}
-                    <Skeleton className="h-5 w-20" />
                   </div>
                 ))}
               </div>

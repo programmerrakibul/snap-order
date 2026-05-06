@@ -1,20 +1,21 @@
+import AddProductForm from "@/components/forms/add-product-form";
 import Container from "@/components/shared/container";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Profile",
+  title: "Add Product",
 };
 
-const ProfilePage = () => {
+const AddProductPage = () => {
   return (
     <>
       <section>
         <Container>
-          <h1>Profile</h1>
+          <AddProductForm />
         </Container>
       </section>
     </>
   );
 };
 
-export default ProfilePage;
+export default AddProductPage;

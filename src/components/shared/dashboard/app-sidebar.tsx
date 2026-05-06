@@ -2,10 +2,11 @@
 
 import {
   IconLayoutDashboard,
-  IconPackage,
   IconShoppingCart,
   IconUsers,
   IconUserCircle,
+  IconPackageImport,
+  IconPackages,
 } from "@tabler/icons-react";
 
 import {
@@ -28,10 +29,15 @@ import ProfileDropdown from "../profile-dropdown";
 
 const sidebarItems = [
   { title: "Overview", href: "/dashboard", icon: IconLayoutDashboard },
+  {
+    title: "Add Product",
+    href: "/dashboard/add-products",
+    icon: IconPackageImport,
+  },
+  { title: "Products", href: "/dashboard/products", icon: IconPackages },
   { title: "Orders", href: "/dashboard/orders", icon: IconShoppingCart },
-  { title: "Products", href: "/dashboard/products", icon: IconPackage },
   { title: "Customers", href: "/dashboard/customers", icon: IconUsers },
-  { title: "Profile", href: "/dashboard/profile", icon:  IconUserCircle },
+  { title: "Profile", href: "/dashboard/profile", icon: IconUserCircle },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -63,10 +69,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     tooltip={item.title}
                     isActive={pathname === item.href}
                     onClick={() => isMobile && toggleSidebar()}
+                    title={item.title}
                     className="data-[active=true]:bg-primary data-[active=true]:text-primary-foreground"
                   >
                     <Link href={item.href}>
-                      {item.icon && <item.icon className="size-4" />}
+                      {<item.icon className="size-4" />}
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
