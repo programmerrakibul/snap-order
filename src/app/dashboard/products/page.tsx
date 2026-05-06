@@ -1,6 +1,7 @@
 import Container from "@/components/shared/container";
 import { ProductsTable } from "@/components/tables/products-table";
 import { TProduct } from "@/types/product.interface";
+import { Metadata } from "next";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 
