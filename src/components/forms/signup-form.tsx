@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { createUser } from "@/actions/server/user.action";
 import { BadRequestError } from "http-errors-enhanced";
 import { getErrorResponse } from "@/lib/error";
+import { IconLoader } from "@tabler/icons-react";
 
 export function SignupForm({
   className,
@@ -76,7 +77,7 @@ export function SignupForm({
 
       toast.success(message);
     } catch (error: unknown) {
-      const {message} = getErrorResponse(error);
+      const { message } = getErrorResponse(error);
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -216,7 +217,14 @@ export function SignupForm({
 
               <Field>
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading ? "Creating..." : "Create Account"}
+                  {isLoading ? (
+                    <>
+                      <IconLoader className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Create Account"
+                  )}
                 </Button>
               </Field>
 

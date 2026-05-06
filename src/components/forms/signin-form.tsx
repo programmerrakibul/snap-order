@@ -20,6 +20,7 @@ import { loginUser } from "@/actions/server/user.action";
 import { toast } from "sonner";
 import { getErrorResponse } from "@/lib/error";
 import { BadRequestError } from "http-errors-enhanced";
+import { IconLoader } from "@tabler/icons-react";
 
 export function LoginForm({
   className,
@@ -108,7 +109,14 @@ export function LoginForm({
 
               <Field>
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading ? "Logging in..." : "Login"}
+                  {isLoading ? (
+                    <>
+                      <IconLoader className="mr-2 h-4 w-4 animate-spin" />
+                      Logging in...
+                    </>
+                  ) : (
+                    "Login"
+                  )}
                 </Button>
               </Field>
 
