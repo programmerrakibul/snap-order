@@ -1,13 +1,11 @@
 "use client";
 
-import * as React from "react";
 import {
-  IconChartBar,
   IconLayoutDashboard,
   IconPackage,
-  IconSettings,
   IconShoppingCart,
   IconUsers,
+  IconUserCircle,
 } from "@tabler/icons-react";
 
 import {
@@ -22,6 +20,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Logo from "@/components/ui/logo";
@@ -32,8 +31,7 @@ const sidebarItems = [
   { title: "Orders", href: "/dashboard/orders", icon: IconShoppingCart },
   { title: "Products", href: "/dashboard/products", icon: IconPackage },
   { title: "Customers", href: "/dashboard/customers", icon: IconUsers },
-  { title: "Analytics", href: "/dashboard/analytics", icon: IconChartBar },
-  { title: "Settings", href: "/dashboard/settings", icon: IconSettings },
+  { title: "Profile", href: "/dashboard/profile", icon:  IconUserCircle },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

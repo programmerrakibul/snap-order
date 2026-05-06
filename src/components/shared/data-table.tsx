@@ -27,24 +27,6 @@ interface DataTableProps<T> {
   showPagination?: boolean;
 }
 
-/**
- * DataTable - A reusable, modern table component with pagination and responsive design
- *
- * Features:
- * - Sticky header with backdrop blur effect
- * - Hover row effects
- * - Pagination controls
- * - Dark/Light theme support
- * - Mobile responsive (desktop table + mobile card layout)
- * - Tablet optimized
- * - Customizable cell rendering
- * - Striped rows option
- *
- * Device Breakpoints:
- * - Mobile: < 640px (card layout)
- * - Tablet: 640px - 1024px (optimized table)
- * - Desktop: > 1024px (full table)
- */
 export function DataTable<T extends object>({
   columns,
   data,
@@ -59,9 +41,6 @@ export function DataTable<T extends object>({
   const endIndex = startIndex + pageSize;
   const currentData = data.slice(startIndex, endIndex);
 
-  const visibleColumns = columns.filter((col) => !col.mobileHidden);
-  const desktopColumns = columns;
-
   const handlePreviousPage = () => {
     setCurrentPage((prev) => Math.max(prev - 1, 1));
   };
@@ -72,143 +51,52 @@ export function DataTable<T extends object>({
 
   return (
     <div className="w-full space-y-4">
-      {/* Desktop View (md and up) */}
-      <div className="hidden md:block overflow-x-auto">
-        <div className="rounded-lg border border-border overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-muted/50">
-                {desktopColumns.map((column) => (
-                  <TableHead
-                    key={String(column.accessor)}
-                    className={`${column.className || ""} whitespace-nowrap`}
-                  >
-                    {column.header}
-                  </TableHead>
-                ))}
+      <div className="rounded-lg border border-border overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-muted/50">
+              {columns.map((column) => (
+                <TableHead
+                  key={String(column.accessor)}
+                  className={`${column.className || ""} whitespace-nowrap`}
+                >
+                  {column.header}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {currentData.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center text-muted-foreground"
+                >
+                  No data available
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {currentData.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={desktopColumns.length}
-                    className="h-24 text-center text-muted-foreground"
-                  >
-                    No data available
-                  </TableCell>
+            ) : (
+              currentData.map((row, index) => (
+                <TableRow
+                  key={index}
+                  className={striped && index % 2 === 0 ? "bg-muted/20" : ""}
+                >
+                  {columns.map((column) => {
+                    const value = row[column.accessor];
+                    return (
+                      <TableCell
+                        key={String(column.accessor)}
+                        className={column.className}
+                      >
+                        {column.cell ? column.cell(value, row) : String(value)}
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
-              ) : (
-                currentData.map((row, index) => (
-                  <TableRow
-                    key={index}
-                    className={striped && index % 2 === 0 ? "bg-muted/20" : ""}
-                  >
-                    {desktopColumns.map((column) => {
-                      const value = row[column.accessor];
-                      return (
-                        <TableCell
-                          key={String(column.accessor)}
-                          className={column.className}
-                        >
-                          {column.cell
-                            ? column.cell(value, row)
-                            : String(value)}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-
-      {/* Tablet View (sm to md) */}
-      <div className="hidden sm:block md:hidden overflow-x-auto">
-        <div className="rounded-lg border border-border overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-muted/50 bg-muted/50">
-                {visibleColumns.map((column) => (
-                  <TableHead
-                    key={String(column.accessor)}
-                    className={`${column.className || ""} text-xs sm:text-sm whitespace-nowrap`}
-                  >
-                    {column.header}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {currentData.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={visibleColumns.length}
-                    className="h-24 text-center text-muted-foreground text-sm"
-                  >
-                    No data available
-                  </TableCell>
-                </TableRow>
-              ) : (
-                currentData.map((row, index) => (
-                  <TableRow
-                    key={index}
-                    className={striped && index % 2 === 0 ? "bg-muted/10" : ""}
-                  >
-                    {visibleColumns.map((column) => {
-                      const value = row[column.accessor];
-                      return (
-                        <TableCell
-                          key={String(column.accessor)}
-                          className={`${column.className || ""} text-xs sm:text-sm py-2 sm:py-3 px-2 sm:px-4`}
-                        >
-                          {column.cell
-                            ? column.cell(value, row)
-                            : String(value)}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-
-      {/* Mobile View (< sm) */}
-      <div className="sm:hidden space-y-2">
-        {currentData.length === 0 ? (
-          <div className="h-32 flex items-center justify-center text-center text-muted-foreground border border-border rounded-lg bg-card">
-            <p className="text-sm">No data available</p>
-          </div>
-        ) : (
-          currentData.map((row, index) => (
-            <div
-              key={index}
-              className="border border-border rounded-lg p-3 space-y-2 bg-card hover:shadow-sm hover:bg-muted/50 transition-all"
-            >
-              {visibleColumns.map((column) => {
-                const value = row[column.accessor];
-                return (
-                  <div
-                    key={String(column.accessor)}
-                    className="flex justify-between items-start gap-2"
-                  >
-                    <span className="text-xs font-semibold text-muted-foreground shrink-0">
-                      {column.header}
-                    </span>
-                    <span className="text-xs font-medium text-foreground text-right wrap-break-word flex-1">
-                      {column.cell ? column.cell(value, row) : String(value)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          ))
-        )}
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
 
       {/* Pagination */}

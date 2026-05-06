@@ -4,9 +4,9 @@ import {
   DataTable,
   type DataTableColumn,
 } from "@/components/shared/data-table";
-import { TableUser } from "@/types/user.interface";
 import { Badge } from "../ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { TableUser } from "@/types/user.interface";
 
 interface CustomersTableProps {
   users: TableUser[];
@@ -28,20 +28,21 @@ export function CustomersTable({ users }: CustomersTableProps) {
       header: "Name",
       accessor: "name",
       className: "font-medium",
+      cell: (value) => <>{value || "N/A"}</>,
     },
     {
       header: "Email",
       accessor: "email",
       cell: (value) => <span className="text-muted-foreground">{value}</span>,
-      mobileHidden: true,
     },
     {
       header: "Phone Number",
       accessor: "phoneNumber",
       cell: (value) => (
-        <span className="text-muted-foreground">{value || "N/A"}</span>
+        <span className="text-muted-foreground">
+          {(value as string) || "N/A"}
+        </span>
       ),
-      mobileHidden: true,
     },
     {
       header: "Verified",
@@ -51,7 +52,6 @@ export function CustomersTable({ users }: CustomersTableProps) {
           {value ? "Yes" : "No"}
         </Badge>
       ),
-      mobileHidden: true,
     },
     {
       header: "Registered",
@@ -69,7 +69,23 @@ export function CustomersTable({ users }: CustomersTableProps) {
           </span>
         );
       },
-      mobileHidden: true,
+    },
+    {
+      header: "Last Login",
+      accessor: "lastLoggedIn",
+      cell: (value) => {
+        const date = new Date(value as string);
+
+        return (
+          <span className="text-sm text-muted-foreground">
+            {date.toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </span>
+        );
+      },
     },
   ];
 

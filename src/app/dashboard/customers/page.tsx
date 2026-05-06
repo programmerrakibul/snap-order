@@ -1,8 +1,13 @@
 import Container from "@/components/shared/container";
 import { CustomersTable } from "@/components/tables/customers-table";
 import { TableUser } from "@/types/user.interface";
+import { Metadata } from "next";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL;
+
+export const metadata: Metadata = {
+  title: "Customers",
+};
 
 async function CustomersPage() {
   const res = await fetch(BASE_URL + "/api/users", {
@@ -28,7 +33,7 @@ async function CustomersPage() {
 
       <section className="pb-8">
         <Container>
-          <div className="bg-card rounded-lg border border-border overflow-hidden">
+          <div className="bg-card rounded-lg border border-border">
             <div className="p-3 sm:p-4 md:p-6 lg:p-8">
               <CustomersTable users={users} />
             </div>

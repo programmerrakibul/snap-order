@@ -29,7 +29,6 @@ export function ProductsTable({ products }: ProductsTableProps) {
           {value}
         </span>
       ),
-      mobileHidden: true,
     },
     {
       header: "Price",
@@ -52,7 +51,6 @@ export function ProductsTable({ products }: ProductsTableProps) {
           {(value as number) > 0 ? `${value} units` : "Out of stock"}
         </Badge>
       ),
-      className: "text-center",
     },
     {
       header: "Created",
@@ -69,7 +67,6 @@ export function ProductsTable({ products }: ProductsTableProps) {
           </span>
         );
       },
-      mobileHidden: true,
     },
     {
       header: "Actions",
