@@ -1,6 +1,11 @@
 "use server";
 
-import { createUserSchema, loginUserSchema, TLoginUser } from "@/schemas/user";
+import {
+  createUserSchema,
+  loginUserSchema,
+  TLoginUser,
+  updateUserSchema,
+} from "@/schemas/user";
 import { uploadToCloudinary } from "./uploadToCloudinary";
 import prisma from "@/lib/prisma";
 import { comparePassword, hashPassword } from "@/lib/password";
@@ -14,6 +19,7 @@ import { isAuthenticated } from "./isAuthenticated";
 import { cookies } from "next/headers";
 import { getErrorResponse } from "@/lib/error";
 import { TUser } from "@/types/user.interface";
+import { revalidatePath } from "next/cache";
 
 export const createUser = async (formData: FormData) => {
   try {
@@ -137,6 +143,54 @@ export const getUserData = async (): Promise<TUser | null> => {
     return user;
   } catch {
     return null;
+  }
+};
+
+export const updateUserData = async (formData: FormData) => {
+  try {
+    const user = await isAuthenticated();
+    const data: Record<string, string> = {};
+
+    if (!user) {
+      return {
+        success: false,
+        message: "You have no permission to perform this action!",
+        error: "UNAUTHORIZED",
+      };
+    }
+
+    const rawData = Object.fromEntries(formData);
+    const { photoURL, name, phoneNumber } = updateUserSchema.parse(rawData);
+
+    if (photoURL instanceof File) {
+      data.photoURL = await uploadToCloudinary(photoURL, {
+        folder: "users",
+      });
+    }
+
+    if (name) data.name = name;
+    if (phoneNumber) data.phoneNumber = phoneNumber;
+
+    await prisma.user.update({
+      data,
+      where: {
+        email: user.email,
+        id: user.id,
+      },
+    });
+
+    revalidatePath("/dashboard/profile");
+
+    return {
+      success: true,
+      message: "Profile updated successfully!",
+    };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      message: (error as Error).message || "Something went wrong!",
+      error: (error as Error).name || "SERVER_ERROR",
+    };
   }
 };
 

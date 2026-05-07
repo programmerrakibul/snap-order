@@ -53,12 +53,14 @@ export default async function RootLayout({
       )}
       suppressHydrationWarning
     >
-      <ThemeProvider>
-        <UserProvider initialUser={user}>
-          <body className="min-h-full flex flex-col">{children}</body>
-        </UserProvider>
-      </ThemeProvider>
-      <Toaster />
+      <body className="min-h-full flex flex-col">
+        <ThemeProvider>
+          <UserProvider initialUser={user}>
+            {children}
+            <Toaster />
+          </UserProvider>
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

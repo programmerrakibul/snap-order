@@ -20,7 +20,7 @@ export function CustomersTable({ users }: CustomersTableProps) {
       cell: (val) => (
         <Avatar className="overflow-hidden">
           <AvatarImage src={val as string} />
-          <AvatarFallback>Avatar</AvatarFallback>
+          <AvatarFallback>User</AvatarFallback>
         </Avatar>
       ),
     },

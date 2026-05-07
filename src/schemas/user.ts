@@ -83,12 +83,20 @@ export const createUserSchema = z.object({
     ),
 });
 
-
 export const loginUserSchema = createUserSchema.pick({
   email: true,
   password: true,
 });
 
+export const updateUserSchema = createUserSchema
+  .pick({
+    name: true,
+    phoneNumber: true,
+    photoURL: true,
+  })
+  .partial();
+
 export type TCreateUserInput = z.input<typeof createUserSchema>;
 export type TCreateUserOutput = z.output<typeof createUserSchema>;
 export type TLoginUser = z.infer<typeof loginUserSchema>;
+export type TUpdateUser = z.infer<typeof updateUserSchema>;
