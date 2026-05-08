@@ -1,7 +1,10 @@
+export const dynamic = "force-dynamic";
+
 import Container from "@/components/shared/container";
 import { CustomersTable } from "@/components/tables/customers-table";
 import { TableUser } from "@/types/user.interface";
 import { Metadata } from "next";
+import { cookies } from "next/headers";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 
@@ -12,7 +15,25 @@ export const metadata: Metadata = {
 async function CustomersPage() {
   const res = await fetch(BASE_URL + "/api/users", {
     cache: "force-cache",
+    credentials: "include",
+    headers: {
+      Cookie: (await cookies()).toString(),
+    },
   });
+
+  if (!res.ok) {
+    return (
+      <>
+        <div className="grid h-full place-items-center">
+          <div>
+            <pre>
+              {res.status} - {res.statusText}
+            </pre>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   const users = (await res.json()).data as TableUser[];
 

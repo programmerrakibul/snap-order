@@ -1,8 +1,25 @@
+import { isAuthenticated } from "@/actions/server/isAuthenticated";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export const GET = async () => {
   try {
+    // const user = await isAuthenticated();
+
+    // if (!user) {
+    //   return NextResponse.json(
+    //     {
+    //       success: false,
+    //       message: "You don't have permission to access this!",
+    //     },
+    //     {
+    //       status: 401,
+    //     },
+    //   );
+    // }
+
+    // console.log(user);
+
     const res = await prisma.user.findMany({
       orderBy: {
         createdAt: "desc",
