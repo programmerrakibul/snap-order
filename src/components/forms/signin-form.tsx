@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { getErrorResponse } from "@/lib/error";
 import { BadRequestError } from "http-errors-enhanced";
 import { IconLoader } from "@tabler/icons-react";
+import Image from 'next/image';
 
 export function LoginForm({
   className,
@@ -127,10 +128,12 @@ export function LoginForm({
             </FieldGroup>
           </form>
           <div className="relative hidden bg-muted md:block">
-            <img
-              src="/placeholder.svg"
+            <Image
+              src="/authentication.jpg"
               alt="Image"
               className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+              width={400}
+              height={400}
             />
           </div>
         </CardContent>

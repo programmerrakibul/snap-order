@@ -16,6 +16,9 @@ export const isAuthenticated = async (): Promise<ITokenUser | null> => {
 
     return user;
   } catch (error: unknown) {
+
+    console.log(error);
+
     if (error instanceof TokenExpiredError) {
       await refreshToken();
 
