@@ -2,18 +2,17 @@ export const dynamic = "force-dynamic";
 
 import Container from "@/components/shared/container";
 import { CustomersTable } from "@/components/tables/customers-table";
+import { getEnv } from "@/lib/env";
 import { TableUser } from "@/types/user.interface";
 import { Metadata } from "next";
 import { cookies } from "next/headers";
-
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 
 export const metadata: Metadata = {
   title: "Customers",
 };
 
 async function CustomersPage() {
-  const res = await fetch(BASE_URL + "/api/users", {
+  const res = await fetch(getEnv().NEXT_PUBLIC_SITE_URL + "/api/users", {
     cache: "force-cache",
     credentials: "include",
     headers: {

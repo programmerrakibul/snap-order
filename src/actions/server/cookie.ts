@@ -7,9 +7,10 @@ import { NODE_ENV } from "@/schemas/env";
 import { ITokenUser } from "@/types/user.interface";
 import { cookies } from "next/headers";
 
+const ACCESS_TOKEN_MAX_AGE = 1 * 60;
+const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60;
+
 export const setCookie = async (user: ITokenUser) => {
-  const ACCESS_TOKEN_MAX_AGE = 15 * 60; // 15 minutes in seconds
-  const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60; // 7 days in seconds
   const cookieStore = await cookies(); // Get cookie store
 
   //  Create payload

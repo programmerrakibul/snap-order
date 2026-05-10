@@ -71,6 +71,11 @@ export const envSchema = z.object({
   CLOUDINARY_API_SECRET: z
     .string("CLOUDINARY_API_SECRET is required")
     .min(1, "CLOUDINARY_API_SECRET is required"),
+
+  NEXT_PUBLIC_SITE_URL: z
+    .url("NEXT_PUBLIC_SITE_URL is invalid!")
+    .trim()
+    .min(1, "NEXT_PUBLIC_SITE_URL is required!"),
 });
 
 export type TEnv = z.infer<typeof envSchema>;

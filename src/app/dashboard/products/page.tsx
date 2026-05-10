@@ -2,18 +2,17 @@ export const dynamic = "force-dynamic";
 
 import Container from "@/components/shared/container";
 import { ProductsTable } from "@/components/tables/products-table";
+import { getEnv } from "@/lib/env";
 import { TProduct } from "@/types/product.interface";
 import { Metadata } from "next";
 import { cookies } from "next/headers";
-
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 
 export const metadata: Metadata = {
   title: "Products",
 };
 
 async function ProductsPage() {
-  const res = await fetch(BASE_URL + "/api/products", {
+  const res = await fetch(getEnv().NEXT_PUBLIC_SITE_URL + "/api/products", {
     cache: "force-cache",
     credentials: "include",
     headers: {
