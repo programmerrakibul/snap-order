@@ -16,7 +16,7 @@ export const refreshToken = async () => {
 
     const user = await verifyRefreshToken(token);
 
-    const ACCESS_TOKEN_MAX_AGE = 1 * 60;
+    const ACCESS_TOKEN_MAX_AGE = 15 * 60;
     const inProduction = getEnv().NODE_ENV === NODE_ENV.PRODUCTION;
 
     const newAccessToken = getAccessToken(user);

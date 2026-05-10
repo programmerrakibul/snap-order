@@ -47,7 +47,7 @@ export default async function proxy(req: NextRequest) {
       response.cookies.set({
         name: "accessToken",
         value: newAccessToken,
-        maxAge: 1 * 60,
+        maxAge: 15 * 60,
         httpOnly: true,
         secure: inProduction,
         sameSite: inProduction ? "none" : "lax",
