@@ -9,6 +9,7 @@ import {
 import { ProductDetailModal } from "@/components/modals/product-detail-modal";
 import { TProduct } from "@/types/product.interface";
 import { IconEye, IconShoppingCart } from "@tabler/icons-react";
+import OrderProductModal from "../modals/order-product-modal";
 
 interface ProductsTableProps {
   products: TProduct[];
@@ -87,14 +88,19 @@ export function ProductsTable({ products }: ProductsTableProps) {
             }
           />
 
-          <Button
-            variant="ghost"
-            size="sm"
-            title="Order Product"
-            className="h-8 w-8 p-0 hover:bg-blue-500/10"
-          >
-            <IconShoppingCart className="h-4 w-4" />
-          </Button>
+          <OrderProductModal
+            productId={value as string}
+            Trigger={
+              <Button
+                variant="ghost"
+                size="sm"
+                title="Order Product"
+                className="h-8 w-8 p-0 hover:bg-blue-500/10"
+              >
+                <IconShoppingCart className="h-4 w-4" />
+              </Button>
+            }
+          />
         </div>
       ),
       className: "text-center",

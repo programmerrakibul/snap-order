@@ -5,6 +5,7 @@ import { OrderStatus } from "@/generated/prisma/enums";
 import { TCreateOrderInput, TOrderResponse } from "@/types/order.interface";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { BadRequestError, HttpError } from "http-errors-enhanced";
+import { revalidatePath } from "next/cache";
 
 export const createOrder = async (
   input: TCreateOrderInput,
@@ -64,6 +65,9 @@ export const createOrder = async (
             create: orderItemsData,
           },
         },
+        include: {
+          items: true,
+        },
       });
 
       // 5. Deduct stock
@@ -76,6 +80,9 @@ export const createOrder = async (
         });
       }
     });
+
+    // 6. Invalidate cache
+    revalidatePath("/dashboard/products");
 
     return {
       success: true,

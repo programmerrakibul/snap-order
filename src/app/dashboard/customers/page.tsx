@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic";
-
 import Container from "@/components/shared/container";
 import { CustomersTable } from "@/components/tables/customers-table";
 import { API_BASE_URL } from "@/lib/exportURL";

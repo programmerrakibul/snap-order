@@ -2,7 +2,8 @@
 
 import prisma from "@/lib/prisma";
 import { productSchema, TProductInput } from "@/schemas/product";
-import { revalidatePath } from "next/cache";
+import { BadRequestError, HttpError } from "http-errors-enhanced";
+import { cacheLife, revalidatePath } from "next/cache";
 
 export const createProduct = async (data: TProductInput) => {
   try {
@@ -43,5 +44,34 @@ export const createProduct = async (data: TProductInput) => {
       message: "Failed to create product",
       error: error instanceof Error ? error.message : "Unknown error",
     };
+  }
+};
+
+export const getProductById = async (id: string) => {
+  "use cache";
+  cacheLife("weeks");
+
+  try {
+    const product = await prisma.product.findUnique({
+      where: { id },
+    });
+
+    if (!product) {
+      throw new BadRequestError("Product not found!");
+    }
+
+    return {
+      ...product,
+      price: Number(product.price),
+      createdAt: product.createdAt.toISOString(),
+      updatedAt: product.updatedAt.toISOString(),
+    };
+  } catch (error: unknown) {
+    console.error(
+      "Error fetching product: ",
+      (error as Error | HttpError).message,
+    );
+
+    return null;
   }
 };

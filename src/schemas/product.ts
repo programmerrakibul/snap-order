@@ -53,4 +53,3 @@ export const productSchema = z.object({
 
 export type TProductInput = z.input<typeof productSchema>;
 export type TProductOutput = z.output<typeof productSchema>;
-export type TProduct = z.infer<typeof productSchema>;

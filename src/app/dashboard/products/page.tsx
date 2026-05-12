@@ -1,4 +1,3 @@
-export const dynamic = "force-dynamic";
 
 import Container from "@/components/shared/container";
 import { ProductsTable } from "@/components/tables/products-table";
