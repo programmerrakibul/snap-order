@@ -1,7 +1,10 @@
+"use server";
+
 import prisma from "@/lib/prisma";
-import { OrderStatus } from "../../generated/prisma/enums";
+import { OrderStatus } from "@/generated/prisma/enums";
 import { TCreateOrderInput, TOrderResponse } from "@/types/order.interface";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
+import { BadRequestError, HttpError } from "http-errors-enhanced";
 
 export const createOrder = async (
   input: TCreateOrderInput,
@@ -22,11 +25,11 @@ export const createOrder = async (
         const product = products.find((p) => p.id === item.productId);
 
         if (!product) {
-          throw new Error(`Product not found: ${item.productId}`);
+          throw new BadRequestError(`Product not found: ${item.productId}`);
         }
 
         if (product.stock < item.quantity) {
-          throw new Error(
+          throw new BadRequestError(
             `Insufficient stock for ${product.name}. Available: ${product.stock}`,
           );
         }
@@ -79,14 +82,14 @@ export const createOrder = async (
       message: "Order created successfully!",
     };
   } catch (error: unknown) {
-    console.error("Create Order Error:", error);
+    console.error("Create Order Error: ", error);
 
-    let errorMessage = (error as Error).message;
+    let errorMessage = (error as Error | HttpError).message;
 
     if ((error as PrismaClientKnownRequestError).code === "P2002") {
-      errorMessage = "Unique constraint violation";
+      errorMessage = "Unique constraint violation!";
     } else if ((error as PrismaClientKnownRequestError).code === "P2025") {
-      errorMessage = "Record not found";
+      errorMessage = "Record not found!";
     }
 
     return {

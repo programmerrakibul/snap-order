@@ -5,14 +5,14 @@ import {
   verifyAccessToken,
   verifyRefreshToken,
 } from "@/lib/token";
-import { getEnv } from "@/lib/env";
-import { NODE_ENV } from "@/schemas/env";
 import { TokenExpiredError } from "jsonwebtoken";
 import { ITokenUser } from "@/types/user.interface";
+import { accessCookieData, refreshCookieData } from "@/lib/constants";
+import { TokenType } from "@/types/token.interface";
 
 export default async function proxy(req: NextRequest) {
-  const accessToken = req.cookies.get("accessToken")?.value;
-  const refreshToken = req.cookies.get("refreshToken")?.value;
+  const accessToken = req.cookies.get(TokenType.ACCESS)?.value;
+  const refreshToken = req.cookies.get(TokenType.REFRESH)?.value;
 
   let user: ITokenUser | null = null;
   let needsRefresh = false;
@@ -37,7 +37,6 @@ export default async function proxy(req: NextRequest) {
       const verifiedUser = await verifyRefreshToken(refreshToken);
       const newAccessToken = getAccessToken(verifiedUser);
       const newRefreshToken = getRefreshToken(verifiedUser);
-      const inProduction = getEnv().NODE_ENV === NODE_ENV.PRODUCTION;
 
       user = verifiedUser;
 
@@ -45,23 +44,13 @@ export default async function proxy(req: NextRequest) {
 
       // Set new cookies
       response.cookies.set({
-        name: "accessToken",
         value: newAccessToken,
-        maxAge: 15 * 60,
-        httpOnly: true,
-        secure: inProduction,
-        sameSite: inProduction ? "none" : "lax",
-        path: "/",
+        ...accessCookieData,
       });
 
       response.cookies.set({
-        name: "refreshToken",
         value: newRefreshToken,
-        maxAge: 7 * 24 * 60 * 60,
-        httpOnly: true,
-        secure: inProduction,
-        sameSite: inProduction ? "none" : "lax",
-        path: "/",
+        ...refreshCookieData,
       });
 
       return response;
@@ -71,17 +60,17 @@ export default async function proxy(req: NextRequest) {
       // Refresh token invalid - clear cookies and redirect
       const response = req.nextUrl.pathname.startsWith("/api")
         ? NextResponse.json(
-            { success: false, message: "Session expired" },
+            { success: false, message: "Session expired!" },
             { status: 401 },
           )
         : NextResponse.redirect(new URL("/auth/signin", req.url));
 
-      response.cookies.delete("accessToken");
-      response.cookies.delete("refreshToken");
+      response.cookies.delete(TokenType.ACCESS);
+      response.cookies.delete(TokenType.REFRESH);
+
       return response;
     }
   }
-
 
   if (!user) {
     if (req.nextUrl.pathname.startsWith("/api")) {
