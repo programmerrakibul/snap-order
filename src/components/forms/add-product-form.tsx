@@ -66,15 +66,6 @@ const AddProductForm = () => {
   return (
     <div className="w-full py-8 md:py-12">
       <Card className="w-full border-0 shadow-md">
-        <CardHeader className="space-y-3 px-4 py-6 sm:px-6 sm:py-8">
-          <CardTitle className="text-2xl sm:text-3xl font-bold">
-            Add New Product
-          </CardTitle>
-          <CardDescription className="text-sm sm:text-base">
-            Fill in the details below to add a new product to your inventory
-          </CardDescription>
-        </CardHeader>
-
         <CardContent className="px-4 pb-8 sm:px-6 lg:pb-10">
           <form
             onSubmit={form.handleSubmit(onSubmit)}
@@ -92,6 +83,7 @@ const AddProductForm = () => {
                       <Input
                         placeholder="Enter product name"
                         {...field}
+                        aria-invalid={fieldState.invalid}
                         disabled={isLoading}
                         className="h-10 sm:h-11 text-sm sm:text-base"
                       />
@@ -116,6 +108,7 @@ const AddProductForm = () => {
                         placeholder="Enter detailed product description"
                         {...field}
                         disabled={isLoading}
+                        aria-invalid={fieldState.invalid}
                         className="text-sm sm:text-base min-h-24 sm:min-h-28"
                       />
 
@@ -150,6 +143,7 @@ const AddProductForm = () => {
                             name={field.name}
                             ref={field.ref}
                             disabled={isLoading}
+                            aria-invalid={fieldState.invalid}
                             className="h-10 sm:h-11 pl-7 text-sm sm:text-base"
                             step="0.01"
                             min="0"
@@ -181,6 +175,7 @@ const AddProductForm = () => {
                           name={field.name}
                           ref={field.ref}
                           disabled={isLoading}
+                          aria-invalid={fieldState.invalid}
                           className="h-10 sm:h-11 text-sm sm:text-base"
                           min="0"
                         />

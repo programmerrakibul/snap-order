@@ -5,6 +5,7 @@ import { TableUser } from "@/types/user.interface";
 import { Metadata } from "next";
 import { Suspense } from "react";
 import CustomersLoading from "./loading";
+import { PageHeader } from "@/components/ui/page-header";
 
 export const metadata: Metadata = {
   title: "Customers",
@@ -15,18 +16,14 @@ async function CustomersPageContent() {
 
   return (
     <div className="space-y-8">
-      <section className="pt-8">
-        <Container>
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Customers</h1>
-            <p className="text-muted-foreground">
-              {users.length > 0
-                ? `Manage and view all ${users.length} customers`
-                : "Manage and view all your customers in one place"}
-            </p>
-          </div>
-        </Container>
-      </section>
+      <PageHeader
+        title="Customers"
+        description={
+          users.length > 0
+            ? `Manage and view all ${users.length} customers`
+            : "Manage and view all your customers in one place"
+        }
+      />
 
       <section className="pb-8">
         <Container>

@@ -1,13 +1,12 @@
-import Container from "@/components/shared/container";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default function Overview() {
   return (
     <>
-      <section>
-        <Container>
-          <h1>Dashboard Overview</h1>
-        </Container>
-      </section>
+      <PageHeader
+        title="Dashboard Overview"
+        description="Welcome to your dashboard overview. Here you can find insights and quick access to your data."
+      />
     </>
   );
 }

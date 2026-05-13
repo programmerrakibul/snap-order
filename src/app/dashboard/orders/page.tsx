@@ -1,19 +1,35 @@
-import Container from "@/components/shared/container";
+import { getAllOrders } from "@/actions/server/order.action";
 import { Metadata } from "next";
+import { Suspense } from "react";
+import OrdersLoading from "./loading";
+import { PageHeader } from "@/components/ui/page-header";
 
 export const metadata: Metadata = {
   title: "Orders",
 };
 
-const OrdersPage = () => {
+async function OrdersPageContent() {
+  const orders = await getAllOrders();
+
   return (
     <>
-      <section>
-        <Container>
-          <h1>Orders</h1>
-        </Container>
-      </section>
+      <PageHeader
+        title="Orders"
+        description={
+          orders.length > 0
+            ? `Manage and view all your ${orders.length} orders`
+            : "Manage and view all your orders in one place"
+        }
+      />
     </>
+  );
+}
+
+const OrdersPage = () => {
+  return (
+    <Suspense fallback={<OrdersLoading />}>
+      <OrdersPageContent />
+    </Suspense>
   );
 };
 

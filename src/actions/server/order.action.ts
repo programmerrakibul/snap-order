@@ -1,11 +1,12 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { OrderStatus } from "@/generated/prisma/enums";
+import { OrderStatus, Role } from "@/generated/prisma/enums";
 import { TCreateOrderInput, TOrderResponse } from "@/types/order.interface";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { BadRequestError, HttpError } from "http-errors-enhanced";
-import { revalidatePath } from "next/cache";
+import { cacheLife, revalidatePath } from "next/cache";
+import { isAuthenticated } from "./isAuthenticated";
 
 export const createOrder = async (
   input: TCreateOrderInput,
@@ -104,5 +105,48 @@ export const createOrder = async (
       message: "Failed to create order!",
       error: errorMessage,
     };
+  }
+};
+
+export const getAllOrders = async () => {
+  "use cache: private";
+  cacheLife("weeks");
+
+  try {
+    const user = await isAuthenticated();
+    
+    if (!user) return [];
+
+    const where = {
+      userId: user.role === Role.ADMIN ? undefined : user.id,
+    };
+
+    const res = await prisma.order.findMany({
+      where,
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        items: true,
+      },
+    });
+
+    const orders = res.map((order) => ({
+      ...order,
+      totalAmount: Number(order.totalAmount),
+      createdAt: order.createdAt.toISOString(),
+      updatedAt: order.updatedAt.toISOString(),
+      items: order.items.map((item) => ({
+        ...item,
+        unitPrice: Number(item.unitPrice),
+        createdAt: item.createdAt.toISOString(),
+        updatedAt: item.updatedAt.toISOString(),
+      })),
+    }));
+
+    return orders;
+  } catch (error: unknown) {
+    console.error("Error fetching orders: ", error);
+    return [];
   }
 };

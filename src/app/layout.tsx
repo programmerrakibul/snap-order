@@ -4,7 +4,6 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/providers/theme-provider";
-import { Suspense } from "react";
 
 const geistMonoHeading = Geist_Mono({
   subsets: ["latin"],
@@ -51,12 +50,10 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
-        <Suspense fallback={<div>Loading...</div>}>
           <ThemeProvider>
             {children}
             <Toaster />
           </ThemeProvider>
-        </Suspense>
       </body>
     </html>
   );

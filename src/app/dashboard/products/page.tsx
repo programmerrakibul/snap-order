@@ -5,6 +5,7 @@ import { TProduct } from "@/types/product.interface";
 import { Metadata } from "next";
 import { Suspense } from "react";
 import ProductsLoading from "./loading";
+import { PageHeader } from "@/components/ui/page-header";
 
 export const metadata: Metadata = {
   title: "Products",
@@ -16,18 +17,14 @@ async function ProductsPageContent() {
   return (
     <>
       <div className="space-y-8">
-        <section className="pt-8">
-          <Container>
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold tracking-tight">Products</h1>
-              <p className="text-muted-foreground">
-                {products.length > 0
-                  ? `Manage and view all your ${products.length} products`
-                  : "Manage and view all your products in one place"}
-              </p>
-            </div>
-          </Container>
-        </section>
+        <PageHeader
+          title="Products"
+          description={
+            products.length > 0
+              ? `Manage and view all your ${products.length} products`
+              : "Manage and view all your products in one place"
+          }
+        />
 
         <section className="pb-8">
           <Container>
