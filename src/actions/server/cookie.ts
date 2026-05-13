@@ -3,7 +3,7 @@
 import { genAccessToken, genRefreshToken } from "@/lib/token";
 import { ITokenUser } from "@/types/user.interface";
 import { cookies } from "next/headers";
-import { accessCookieData, refreshCookieData } from "@/lib/constants";
+import { accessCookieData, refreshCookieData } from "@/lib/constants-server";
 
 export const setCookie = async (user: ITokenUser) => {
   const cookieStore = await cookies(); // Get cookie store

@@ -1,6 +1,6 @@
 "use server";
 
-import { refreshCookieData } from "@/lib/constants";
+import { refreshCookieData } from "@/lib/constants-server";
 import { genAccessToken, verifyRefreshToken } from "@/lib/token";
 import { TokenType } from "@/types/token.interface";
 import { UnauthorizedError } from "http-errors-enhanced";

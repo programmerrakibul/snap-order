@@ -7,7 +7,7 @@ import {
 } from "@/lib/token";
 import { TokenExpiredError } from "jsonwebtoken";
 import { ITokenUser } from "@/types/user.interface";
-import { accessCookieData, refreshCookieData } from "@/lib/constants";
+import { accessCookieData, refreshCookieData } from "@/lib/constants-server";
 import { TokenType } from "@/types/token.interface";
 
 export default async function proxy(req: NextRequest) {

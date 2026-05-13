@@ -1,34 +1,30 @@
-import { getEnv } from "@/lib/env";
-import { NODE_ENV } from "@/schemas/env";
-import { TokenType } from "@/types/token.interface";
-import { ResponseCookie } from "next/dist/compiled/@edge-runtime/cookies";
+import { OrderStatus } from "@/generated/prisma/enums";
 
 export const ACCESS_TOKEN_MAX_AGE = 15 * 60;
 export const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60;
 
-export const inProduction = getEnv().NODE_ENV === NODE_ENV.PRODUCTION;
-
-// Cookie options
-export const cookieData: Pick<
-  ResponseCookie,
-  "httpOnly" | "secure" | "sameSite" | "path"
+export const STATUS_CONFIG: Record<
+  OrderStatus,
+  { color: string; label: string }
 > = {
-  httpOnly: true,
-  secure: inProduction,
-  sameSite: inProduction ? "none" : "lax",
-  path: "/",
+  PENDING: {
+    color: "bg-yellow-500/10 text-yellow-700 border-yellow-200",
+    label: "Pending",
+  },
+  CONFIRMED: {
+    color: "bg-blue-500/10 text-blue-700 border-blue-200",
+    label: "Confirmed",
+  },
+  SHIPPED: {
+    color: "bg-purple-500/10 text-purple-700 border-purple-200",
+    label: "Shipped",
+  },
+  DELIVERED: {
+    color: "bg-green-500/10 text-green-700 border-green-200",
+    label: "Delivered",
+  },
+  CANCELLED: {
+    color: "bg-red-500/10 text-red-700 border-red-200",
+    label: "Cancelled",
+  },
 };
-
-export const accessCookieData = {
-  ...cookieData,
-  name: TokenType.ACCESS,
-  expires: new Date(Date.now() + ACCESS_TOKEN_MAX_AGE * 1000),
-  maxAge: ACCESS_TOKEN_MAX_AGE,
-} as const;
-
-export const refreshCookieData = {
-  ...cookieData,
-  name: TokenType.REFRESH,
-  expires: new Date(Date.now() + REFRESH_TOKEN_MAX_AGE * 1000),
-  maxAge: REFRESH_TOKEN_MAX_AGE,
-} as const;
