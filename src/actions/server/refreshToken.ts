@@ -1,7 +1,7 @@
 "use server";
 
 import { refreshCookieData } from "@/lib/constants";
-import { getAccessToken, verifyRefreshToken } from "@/lib/token";
+import { genAccessToken, verifyRefreshToken } from "@/lib/token";
 import { TokenType } from "@/types/token.interface";
 import { UnauthorizedError } from "http-errors-enhanced";
 import { cookies } from "next/headers";
@@ -16,7 +16,7 @@ export const refreshToken = async () => {
 
     const user = await verifyRefreshToken(token);
 
-    const newAccessToken = getAccessToken(user);
+    const newAccessToken = genAccessToken(user);
 
     cookieStore.set({
       value: newAccessToken,

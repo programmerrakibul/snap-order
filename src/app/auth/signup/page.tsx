@@ -1,4 +1,4 @@
-import { SignupForm } from "@/components/forms/signup-form";
+import SignupForm from "@/components/forms/signup-form";
 import Container from "@/components/shared/container";
 import { Metadata } from "next";
 

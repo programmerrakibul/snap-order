@@ -12,7 +12,7 @@ interface CustomersTableProps {
   users: TableUser[];
 }
 
-export function CustomersTable({ users }: CustomersTableProps) {
+export default function CustomersTable({ users }: CustomersTableProps) {
   const columns: DataTableColumn<TableUser>[] = [
     {
       header: "Photo",

@@ -1,38 +1,17 @@
+import { getAllUsers } from "@/actions/server/user.action";
 import Container from "@/components/shared/container";
-import { CustomersTable } from "@/components/tables/customers-table";
-import { API_BASE_URL } from "@/lib/exportURL";
+import CustomersTable from "@/components/tables/customers-table";
 import { TableUser } from "@/types/user.interface";
 import { Metadata } from "next";
-import { cookies } from "next/headers";
+import { Suspense } from "react";
+import CustomersLoading from "./loading";
 
 export const metadata: Metadata = {
   title: "Customers",
 };
 
-async function CustomersPage() {
-  const res = await fetch(`${API_BASE_URL}/users`, {
-    cache: "force-cache",
-    credentials: "include",
-    headers: {
-      Cookie: (await cookies()).toString(),
-    },
-  });
-
-  if (!res.ok) {
-    return (
-      <>
-        <div className="grid h-full place-items-center">
-          <div>
-            <pre>
-              {res.status} - {res.statusText}
-            </pre>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  const users = (await res.json()).data as TableUser[];
+async function CustomersPageContent() {
+  const users = (await getAllUsers()) as TableUser[];
 
   return (
     <div className="space-y-8">
@@ -68,4 +47,10 @@ async function CustomersPage() {
   );
 }
 
-export default CustomersPage;
+export default function CustomersPage() {
+  return (
+    <Suspense fallback={<CustomersLoading />}>
+      <CustomersPageContent />
+    </Suspense>
+  );
+}

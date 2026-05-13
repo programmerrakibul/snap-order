@@ -6,16 +6,16 @@ import {
   DataTable,
   type DataTableColumn,
 } from "@/components/shared/data-table";
-import { ProductDetailModal } from "@/components/modals/product-detail-modal";
 import { TProduct } from "@/types/product.interface";
 import { IconEye, IconShoppingCart } from "@tabler/icons-react";
-import OrderProductModal from "../modals/order-product-modal";
+import OrderProductModal from "@/components/modals/order-product-modal";
+import ProductDetailModal from "@/components/modals/product-detail-modal";
 
 interface ProductsTableProps {
   products: TProduct[];
 }
 
-export function ProductsTable({ products }: ProductsTableProps) {
+export default function ProductsTable({ products }: ProductsTableProps) {
   const columns: DataTableColumn<TProduct>[] = [
     {
       header: "Product Name",

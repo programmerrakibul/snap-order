@@ -28,7 +28,7 @@ import { getErrorResponse } from "@/lib/error";
 import { IconLoader } from "@tabler/icons-react";
 import Image from "next/image";
 
-export function SignupForm({
+export default function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
@@ -239,6 +239,7 @@ export function SignupForm({
             <Image
               src="/authentication.jpg"
               alt="Image"
+              loading="eager"
               className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
               width={400}
               height={700}

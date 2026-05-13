@@ -13,41 +13,34 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { TProduct } from "@/types/product.interface";
 import { ScrollArea } from "../ui/scroll-area";
+import { getProductById } from "@/actions/server/product.action";
+import { HttpError } from "http-errors-enhanced";
 
 interface ProductDetailModalProps {
   productId: string;
   Trigger: React.ReactNode;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL;
-
-export function ProductDetailModal({
+export default function ProductDetailModal({
   productId,
   Trigger,
 }: ProductDetailModalProps) {
   const [product, setProduct] = useState<TProduct | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       setError(null);
+
       try {
-        const result = await fetch(`${BASE_URL}/api/products/${productId}`, {
-          cache: "force-cache",
-        });
-
-        if (!result.ok) {
-          throw new Error("Failed to load product!");
-        }
-
-        const product = (await result.json()).data as TProduct;
+        const product = await getProductById(productId);
 
         setProduct(product);
-      } catch (err) {
+      } catch (err: unknown) {
         setError(
-          err instanceof Error ? err.message : "Failed to load product!",
+          (err as Error | HttpError).message || "Failed to load product!",
         );
         console.error(err);
       } finally {

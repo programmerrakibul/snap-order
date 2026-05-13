@@ -29,7 +29,10 @@ interface EditProfileFormProps {
   onSuccess?: () => void;
 }
 
-export function EditProfileForm({ user, onSuccess }: EditProfileFormProps) {
+export default function EditProfileForm({
+  user,
+  onSuccess,
+}: EditProfileFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(
     user.photoURL || null,
@@ -84,6 +87,7 @@ export function EditProfileForm({ user, onSuccess }: EditProfileFormProps) {
         ...(data.phoneNumber && { phoneNumber: data.phoneNumber }),
         ...(previewImage && { photoURL: previewImage }),
       };
+      
       setUser(updatedUser);
 
       toast.success(response.message);

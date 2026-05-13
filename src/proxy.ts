@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  getAccessToken,
-  getRefreshToken,
+  genAccessToken,
+  genRefreshToken,
   verifyAccessToken,
   verifyRefreshToken,
 } from "@/lib/token";
@@ -35,8 +35,8 @@ export default async function proxy(req: NextRequest) {
     try {
       // Verify refresh token
       const verifiedUser = await verifyRefreshToken(refreshToken);
-      const newAccessToken = getAccessToken(verifiedUser);
-      const newRefreshToken = getRefreshToken(verifiedUser);
+      const newAccessToken = genAccessToken(verifiedUser);
+      const newRefreshToken = genRefreshToken(verifiedUser);
 
       user = verifiedUser;
 
@@ -58,12 +58,7 @@ export default async function proxy(req: NextRequest) {
       console.error("Error refreshing tokens:", error);
 
       // Refresh token invalid - clear cookies and redirect
-      const response = req.nextUrl.pathname.startsWith("/api")
-        ? NextResponse.json(
-            { success: false, message: "Session expired!" },
-            { status: 401 },
-          )
-        : NextResponse.redirect(new URL("/auth/signin", req.url));
+      const response = NextResponse.redirect(new URL("/auth/signin", req.url));
 
       response.cookies.delete(TokenType.ACCESS);
       response.cookies.delete(TokenType.REFRESH);
@@ -73,16 +68,6 @@ export default async function proxy(req: NextRequest) {
   }
 
   if (!user) {
-    if (req.nextUrl.pathname.startsWith("/api")) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "You don't have permission to access this!",
-        },
-        { status: 401 },
-      );
-    }
-
     return NextResponse.redirect(new URL("/auth/signin", req.url));
   }
 
@@ -90,5 +75,5 @@ export default async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/api/:path*"],
+  matcher: ["/dashboard/:path*"],
 };

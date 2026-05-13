@@ -28,8 +28,8 @@ const OrderProductModal = ({ Trigger, productId }: OrderProductModalProps) => {
   useEffect(() => {
     (async () => {
       if (!isOpen) return;
-
       setIsLoadingProduct(true);
+      
       try {
         const data = await getProductById(productId);
         setProduct(data);

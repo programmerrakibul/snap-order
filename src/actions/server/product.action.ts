@@ -47,6 +47,33 @@ export const createProduct = async (data: TProductInput) => {
   }
 };
 
+export const getAllProducts = async () => {
+  "use cache";
+  cacheLife("weeks");
+
+  try {
+    const products = await prisma.product.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return products.map((product) => ({
+      ...product,
+      price: Number(product.price),
+      createdAt: product.createdAt.toISOString(),
+      updatedAt: product.updatedAt.toISOString(),
+    }));
+  } catch (error: unknown) {
+    console.error(
+      "Error fetching products:",
+      (error as Error | HttpError).message,
+    );
+
+    return [];
+  }
+};
+
 export const getProductById = async (id: string) => {
   "use cache";
   cacheLife("weeks");

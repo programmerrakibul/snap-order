@@ -50,7 +50,7 @@ const generateToken = ({
   }
 };
 
-export const getAccessToken = (payload: ITokenUser): string => {
+export const genAccessToken = (payload: ITokenUser): string => {
   try {
     const secret = getEnv().ACCESS_TOKEN_SECRET;
 
@@ -64,7 +64,7 @@ export const getAccessToken = (payload: ITokenUser): string => {
   }
 };
 
-export const getRefreshToken = (payload: ITokenUser): string => {
+export const genRefreshToken = (payload: ITokenUser): string => {
   try {
     const secret = getEnv().REFRESH_TOKEN_SECRET;
 

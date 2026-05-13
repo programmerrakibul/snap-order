@@ -25,13 +25,14 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import useUserData from "@/hooks/useUserData";
-import { redirect } from "next/navigation";
 
 export default function ProfileDropdown() {
   const { isMobile } = useSidebar();
-  const { user } = useUserData();
+  const { user, loading } = useUserData();
 
-  if (!user) return redirect("/auth/signin");
+  if (loading) return <div>Loading...</div>;
+
+  if (!user) return null;
 
   return (
     <SidebarMenu>

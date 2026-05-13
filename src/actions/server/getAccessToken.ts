@@ -5,11 +5,10 @@ import { cookies } from "next/headers";
 
 export const getAccessToken = async (): Promise<string | null> => {
   try {
-    const token = (await cookies()).get(TokenType.ACCESS)?.value;
+    const cookieStore = await cookies();
+    const token = cookieStore.get(TokenType.ACCESS)?.value;
 
-    if (!token) return null;
-
-    return token;
+    return token ?? null;
   } catch (error: unknown) {
     throw error;
   }

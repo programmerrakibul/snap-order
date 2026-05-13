@@ -12,14 +12,16 @@ import {
   IconShield,
   IconCheck,
 } from "@tabler/icons-react";
-import { EditProfileModal } from "@/components/modals/edit-profile-modal";
+import EditProfileModal from "@/components/modals/edit-profile-modal";
+import { Suspense } from "react";
+import ProfileLoading from "./loading";
 
 export const metadata: Metadata = {
   title: "Profile",
   description: "View and manage your profile",
 };
 
-const ProfilePage = async () => {
+async function ProfilePageContent() {
   const user = await getUserData();
 
   if (!user) return redirect("/auth/signin");
@@ -235,6 +237,12 @@ const ProfilePage = async () => {
       </Container>
     </section>
   );
-};
+}
 
-export default ProfilePage;
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<ProfileLoading />}>
+      <ProfilePageContent />
+    </Suspense>
+  );
+}

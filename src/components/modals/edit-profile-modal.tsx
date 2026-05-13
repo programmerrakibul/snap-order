@@ -10,13 +10,13 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { EditProfileForm } from "@/components/forms/edit-profile-form";
+import EditProfileForm from "@/components/forms/edit-profile-form";
 
 interface EditProfileModalProps {
   user: TUser;
 }
 
-export function EditProfileModal({ user }: EditProfileModalProps) {
+export default function EditProfileModal({ user }: EditProfileModalProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleOpenChange = (open: boolean) => {

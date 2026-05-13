@@ -12,6 +12,7 @@ import { comparePassword, hashPassword } from "@/lib/password";
 import {
   BadRequestError,
   ConflictError,
+  HttpError,
   UnauthorizedError,
 } from "http-errors-enhanced";
 import { setCookie } from "./cookie";
@@ -19,7 +20,7 @@ import { isAuthenticated } from "./isAuthenticated";
 import { cookies } from "next/headers";
 import { getErrorResponse } from "@/lib/error";
 import { TUser } from "@/types/user.interface";
-import { revalidatePath } from "next/cache";
+import { cacheLife, revalidatePath } from "next/cache";
 
 export const createUser = async (formData: FormData) => {
   try {
@@ -123,6 +124,8 @@ export const loginUser = async (payload: TLoginUser) => {
 };
 
 export const getUserData = async (): Promise<TUser | null> => {
+  "use cache: private";
+
   try {
     const data = await isAuthenticated();
 
@@ -143,6 +146,33 @@ export const getUserData = async (): Promise<TUser | null> => {
     return user;
   } catch {
     return null;
+  }
+};
+
+export const getAllUsers = async () => {
+  "use cache";
+  cacheLife("weeks");
+
+  try {
+    const users = await prisma.user.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return users.map((user) => ({
+      ...user,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
+      lastLoggedIn: user.lastLoggedIn.toISOString(),
+    }));
+  } catch (error: unknown) {
+    console.error(
+      "Error fetching users:",
+      (error as Error | HttpError).message,
+    );
+
+    return [];
   }
 };
 

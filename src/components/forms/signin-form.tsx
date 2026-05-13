@@ -21,9 +21,9 @@ import { toast } from "sonner";
 import { getErrorResponse } from "@/lib/error";
 import { BadRequestError } from "http-errors-enhanced";
 import { IconLoader } from "@tabler/icons-react";
-import Image from 'next/image';
+import Image from "next/image";
 
-export function LoginForm({
+export default function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
@@ -131,6 +131,7 @@ export function LoginForm({
             <Image
               src="/authentication.jpg"
               alt="Image"
+              loading="eager"
               className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
               width={400}
               height={400}

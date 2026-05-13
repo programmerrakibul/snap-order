@@ -1,6 +1,6 @@
 "use server";
 
-import { getAccessToken, getRefreshToken } from "@/lib/token";
+import { genAccessToken, genRefreshToken } from "@/lib/token";
 import { ITokenUser } from "@/types/user.interface";
 import { cookies } from "next/headers";
 import { accessCookieData, refreshCookieData } from "@/lib/constants";
@@ -17,8 +17,8 @@ export const setCookie = async (user: ITokenUser) => {
   };
 
   // Generate tokens
-  const accessToken = getAccessToken(payload);
-  const refreshToken = getRefreshToken(payload);
+  const accessToken = genAccessToken(payload);
+  const refreshToken = genRefreshToken(payload);
 
   // Set Access Token
   cookieStore.set({

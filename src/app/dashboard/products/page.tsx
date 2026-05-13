@@ -1,72 +1,58 @@
-
+import { getAllProducts } from "@/actions/server/product.action";
 import Container from "@/components/shared/container";
-import { ProductsTable } from "@/components/tables/products-table";
-import { API_BASE_URL } from "@/lib/exportURL";
+import ProductsTable from "@/components/tables/products-table";
 import { TProduct } from "@/types/product.interface";
 import { Metadata } from "next";
-import { cookies } from "next/headers";
+import { Suspense } from "react";
+import ProductsLoading from "./loading";
 
 export const metadata: Metadata = {
   title: "Products",
 };
 
-async function ProductsPage() {
-  const res = await fetch(`${API_BASE_URL}/products`, {
-    cache: "force-cache",
-    credentials: "include",
-    headers: {
-      Cookie: (await cookies()).toString(),
-    },
-  });
-
-  if (!res.ok) {
-    return (
-      <>
-        <div className="grid h-full place-items-center">
-          <div>
-            <pre>
-              {res.status} - {res.statusText}
-            </pre>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  const products = (await res.json()).data as TProduct[];
+async function ProductsPageContent() {
+  const products = (await getAllProducts()) as TProduct[];
 
   return (
-    <div className="space-y-8">
-      <section className="pt-8">
-        <Container>
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Products</h1>
-            <p className="text-muted-foreground">
-              {products.length > 0
-                ? `Manage and view all your ${products.length} products`
-                : "Manage and view all your products in one place"}
-            </p>
-          </div>
-        </Container>
-      </section>
-
-      <section className="pb-8">
-        <Container>
-          <div className="bg-card rounded-lg border border-border overflow-hidden">
-            <div className="p-3 sm:p-4 md:p-6 lg:p-8">
-              <ProductsTable products={products} />
+    <>
+      <div className="space-y-8">
+        <section className="pt-8">
+          <Container>
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold tracking-tight">Products</h1>
+              <p className="text-muted-foreground">
+                {products.length > 0
+                  ? `Manage and view all your ${products.length} products`
+                  : "Manage and view all your products in one place"}
+              </p>
             </div>
-          </div>
+          </Container>
+        </section>
 
-          {products.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">No products found.</p>
+        <section className="pb-8">
+          <Container>
+            <div className="bg-card rounded-lg border border-border overflow-hidden">
+              <div className="p-3 sm:p-4 md:p-6 lg:p-8">
+                <ProductsTable products={products} />
+              </div>
             </div>
-          )}
-        </Container>
-      </section>
-    </div>
+
+            {products.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground mb-4">No products found.</p>
+              </div>
+            )}
+          </Container>
+        </section>
+      </div>
+    </>
   );
 }
 
-export default ProductsPage;
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<ProductsLoading />}>
+      <ProductsPageContent />
+    </Suspense>
+  );
+}
