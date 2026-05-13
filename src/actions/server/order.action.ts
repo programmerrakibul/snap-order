@@ -84,6 +84,7 @@ export const createOrder = async (
 
     // 6. Invalidate cache
     revalidatePath("/dashboard/products");
+    revalidatePath("/dashboard/orders");
 
     return {
       success: true,

@@ -70,10 +70,7 @@ const OrderProductForm = ({ product, setIsOpen }: OrderProductFormProps) => {
 
   return (
     <>
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="flex flex-col gap-4 py-4"
-      >
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         {/* Quantity Input */}
         <Controller
           name="quantity"

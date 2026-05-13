@@ -72,10 +72,10 @@ export default function ProductsTable({ products }: ProductsTableProps) {
     {
       header: "Actions",
       accessor: "id",
-      cell: (value) => (
+      cell: (_value, row) => (
         <div className="flex items-center justify-center gap-2">
           <ProductDetailModal
-            productId={value as string}
+            product={row}
             Trigger={
               <Button
                 variant="ghost"
@@ -89,7 +89,7 @@ export default function ProductsTable({ products }: ProductsTableProps) {
           />
 
           <OrderProductModal
-            productId={value as string}
+            product={row}
             Trigger={
               <Button
                 variant="ghost"

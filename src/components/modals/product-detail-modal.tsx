@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,42 +12,16 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { TProduct } from "@/types/product.interface";
 import { ScrollArea } from "../ui/scroll-area";
-import { getProductById } from "@/actions/server/product.action";
-import { HttpError } from "http-errors-enhanced";
 
 interface ProductDetailModalProps {
-  productId: string;
   Trigger: React.ReactNode;
+  product: TProduct;
 }
 
 export default function ProductDetailModal({
-  productId,
   Trigger,
+  product,
 }: ProductDetailModalProps) {
-  const [product, setProduct] = useState<TProduct | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const product = await getProductById(productId);
-
-        setProduct(product);
-      } catch (err: unknown) {
-        setError(
-          (err as Error | HttpError).message || "Failed to load product!",
-        );
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [productId]);
-
   return (
     <Dialog>
       <DialogTrigger asChild>{Trigger}</DialogTrigger>
@@ -60,113 +33,101 @@ export default function ProductDetailModal({
           </DialogDescription>
         </DialogHeader>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <p className="text-muted-foreground">
-              Loading product information...
-            </p>
-          </div>
-        ) : error ? (
-          <div className="flex items-center justify-center py-12">
-            <p className="text-destructive">{error}</p>
-          </div>
-        ) : product ? (
-          <ScrollArea className="max-h-[calc(min(600px,80vh)-115px)] overflow-hidden">
-            <div className="flex flex-col gap-6">
+        <ScrollArea className="max-h-[calc(min(600px,80vh)-115px)] overflow-hidden">
+          <div className="flex flex-col gap-6">
+            <div>
+              <label className="text-sm font-semibold text-muted-foreground">
+                Product Name
+              </label>
+              <p className="text-lg font-bold mt-1">{product.name}</p>
+            </div>
+
+            <Separator />
+
+            <div>
+              <label className="text-sm font-semibold text-muted-foreground">
+                Description
+              </label>
+              <p className="text-sm text-foreground mt-2 leading-relaxed">
+                {product.description}
+              </p>
+            </div>
+
+            <Separator />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div>
                 <label className="text-sm font-semibold text-muted-foreground">
-                  Product Name
+                  Price
                 </label>
-                <p className="text-lg font-bold mt-1">{product.name}</p>
-              </div>
-
-              <Separator />
-
-              <div>
-                <label className="text-sm font-semibold text-muted-foreground">
-                  Description
-                </label>
-                <p className="text-sm text-foreground mt-2 leading-relaxed">
-                  {product.description}
+                <p className="text-2xl font-bold text-primary mt-1">
+                  ${product.price.toFixed(2)}
                 </p>
               </div>
 
-              <Separator />
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                <div>
-                  <label className="text-sm font-semibold text-muted-foreground">
-                    Price
-                  </label>
-                  <p className="text-2xl font-bold text-primary mt-1">
-                    ${product.price.toFixed(2)}
-                  </p>
-                </div>
-
-                <div>
-                  <label className="text-sm font-semibold text-muted-foreground">
-                    Stock Status
-                  </label>
-                  <div className="mt-1">
-                    <Badge
-                      variant={product.stock > 0 ? "default" : "destructive"}
-                      className="text-sm"
-                    >
-                      {product.stock > 0
-                        ? `${product.stock} units available`
-                        : "Out of stock"}
-                    </Badge>
-                  </div>
+              <div>
+                <label className="text-sm font-semibold text-muted-foreground">
+                  Stock Status
+                </label>
+                <div className="mt-1">
+                  <Badge
+                    variant={product.stock > 0 ? "default" : "destructive"}
+                    className="text-sm"
+                  >
+                    {product.stock > 0
+                      ? `${product.stock} units available`
+                      : "Out of stock"}
+                  </Badge>
                 </div>
               </div>
+            </div>
 
-              <Separator />
+            <Separator />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                <div>
-                  <label className="text-sm font-semibold text-muted-foreground">
-                    Created
-                  </label>
-                  <p className="text-xs sm:text-sm text-foreground mt-1">
-                    {new Date(product.createdAt).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
-                </div>
-
-                <div>
-                  <label className="text-sm font-semibold text-muted-foreground">
-                    Last Updated
-                  </label>
-                  <p className="text-xs sm:text-sm text-foreground mt-1">
-                    {new Date(product.updatedAt).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <div>
+                <label className="text-sm font-semibold text-muted-foreground">
+                  Created
+                </label>
+                <p className="text-xs sm:text-sm text-foreground mt-1">
+                  {new Date(product.createdAt).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
               </div>
-
-              <Separator />
 
               <div>
                 <label className="text-sm font-semibold text-muted-foreground">
-                  Product ID
+                  Last Updated
                 </label>
-                <p className="text-xs text-muted-foreground font-mono mt-1 break-all bg-muted/50 p-2 rounded">
-                  {product.id}
+                <p className="text-xs sm:text-sm text-foreground mt-1">
+                  {new Date(product.updatedAt).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </p>
               </div>
             </div>
-          </ScrollArea>
-        ) : null}
+
+            <Separator />
+
+            <div>
+              <label className="text-sm font-semibold text-muted-foreground">
+                Product ID
+              </label>
+              <p className="text-xs text-muted-foreground font-mono mt-1 break-all bg-muted/50 p-2 rounded">
+                {product.id}
+              </p>
+            </div>
+          </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
