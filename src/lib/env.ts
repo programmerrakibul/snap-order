@@ -3,7 +3,7 @@ import z from "zod";
 import { BadRequestError } from "http-errors-enhanced";
 
 export const getEnv = () => {
-  const result = envSchema.safeParse(process.env);
+  const result = envSchema.safeParse(process.env || import.meta);
 
   if (!result.success) {
     const fieldErrors = z.flattenError(result.error).fieldErrors;

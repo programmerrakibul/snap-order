@@ -13,6 +13,11 @@ import { TokenType } from "@/types/token.interface";
 export default async function proxy(req: NextRequest) {
   const accessToken = req.cookies.get(TokenType.ACCESS)?.value;
   const refreshToken = req.cookies.get(TokenType.REFRESH)?.value;
+  const callbackUrl = encodeURIComponent(new URL(req.url).toString());
+  const redirectUrl = new URL(
+    `/auth/signin?callbackUrl=${callbackUrl}`,
+    req.url,
+  );
 
   let user: ITokenUser | null = null;
   let needsRefresh = false;
@@ -58,7 +63,7 @@ export default async function proxy(req: NextRequest) {
       console.error("Error refreshing tokens:", error);
 
       // Refresh token invalid - clear cookies and redirect
-      const response = NextResponse.redirect(new URL("/auth/signin", req.url));
+      const response = NextResponse.redirect(redirectUrl);
 
       response.cookies.delete(TokenType.ACCESS);
       response.cookies.delete(TokenType.REFRESH);
@@ -67,8 +72,9 @@ export default async function proxy(req: NextRequest) {
     }
   }
 
+  // Redirect unauthenticated users to signin
   if (!user) {
-    return NextResponse.redirect(new URL("/auth/signin", req.url));
+    return NextResponse.redirect(redirectUrl);
   }
 
   return NextResponse.next();

@@ -22,11 +22,17 @@ import { getErrorResponse } from "@/lib/error";
 import { BadRequestError } from "http-errors-enhanced";
 import { IconLoader } from "@tabler/icons-react";
 import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
+import { CLIENT_URL } from "@/lib/exportURL";
 
 export default function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const searchParams = useSearchParams();
+  const { replace } = useRouter();
+  const callbackUrl =
+    searchParams.get("callbackUrl") || `${CLIENT_URL}/dashboard`;
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { handleSubmit, control, reset } = useForm<TLoginUser>({
     resolver: zodResolver(loginUserSchema),
@@ -43,6 +49,7 @@ export default function LoginForm({
 
       if (!success) throw new BadRequestError("Login failed!");
 
+      replace(callbackUrl);
       reset();
       toast.success(message);
     } catch (error: unknown) {
