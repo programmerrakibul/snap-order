@@ -1,4 +1,6 @@
-export type TOrderItem = {
+import { OrderStatus } from "@/generated/prisma/enums";
+
+export type TCreateOrderItem = {
   productId: string;
   quantity: number;
 };
@@ -6,7 +8,7 @@ export type TOrderItem = {
 export type TCreateOrderInput = {
   userId: string;
   shippingAddress: string;
-  items: TOrderItem[];
+  items: TCreateOrderItem[];
 };
 
 export type TOrderResponse = {
@@ -14,3 +16,24 @@ export type TOrderResponse = {
   message: string;
   error?: string;
 };
+
+export interface TOrderItem {
+  id: string;
+  productId: string;
+  quantity: number;
+  unitPrice: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TOrder {
+  id: string;
+  orderNumber: string;
+  status: OrderStatus;
+  totalAmount: number;
+  userId: string;
+  shippingAddress: string;
+  createdAt: string;
+  updatedAt: string;
+  items: TOrderItem[];
+}

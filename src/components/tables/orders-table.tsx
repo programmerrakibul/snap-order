@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,59 +17,33 @@ import useUserData from "@/hooks/useUserData";
 import { OrderStatus, Role } from "@/generated/prisma/enums";
 import {
   IconEye,
-  IconChevronDown,
+  IconDotsVerticalFilled,
   IconTrash,
   IconEdit,
 } from "@tabler/icons-react";
-import { toast } from "sonner";
 import { STATUS_CONFIG } from "@/lib/constants";
-
-interface OrderItem {
-  id: string;
-  productId: string;
-  quantity: number;
-  unitPrice: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Order {
-  id: string;
-  orderNumber: string;
-  status: OrderStatus;
-  totalAmount: number;
-  userId: string;
-  shippingAddress: string;
-  createdAt: string;
-  updatedAt: string;
-  items: OrderItem[];
-}
+import OrderDetailModal from "@/components/modals/order-detail-modal";
+import DeleteOrderModal from "@/components/modals/delete-order-modal";
+import UpdateOrderStatusModal from "@/components/modals/update-order-status-modal";
+import { TOrder, TOrderItem } from "@/types/order.interface";
 
 interface OrdersTableProps {
-  orders: Order[];
+  orders: TOrder[];
+  onOrdersChange?: () => void;
 }
 
-export default function OrdersTable({ orders }: OrdersTableProps) {
+export default function OrdersTable({
+  orders,
+  onOrdersChange,
+}: OrdersTableProps) {
   const { user } = useUserData();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const handleView = () => {
-    toast.info("View order details - Coming soon!");
-  };
+  const handleOrderChange = useCallback(() => {
+    onOrdersChange?.();
+  }, [onOrdersChange]);
 
-  const handleDelete = (status: OrderStatus) => {
-    if (status !== OrderStatus.PENDING && user?.role !== Role.ADMIN) {
-      toast.error("Can only delete pending orders");
-      return;
-    }
-    toast.info("Delete order - Coming soon!");
-  };
-
-  const handleModifyStatus = () => {
-    toast.info("Modify order status - Coming soon!");
-  };
-
-  const columns: DataTableColumn<Order>[] = [
+  const columns: DataTableColumn<TOrder>[] = [
     {
       header: "Order #",
       accessor: "orderNumber",
@@ -105,7 +79,8 @@ export default function OrdersTable({ orders }: OrdersTableProps) {
       header: "Items",
       accessor: "items",
       cell: (value) => {
-        const items = value as OrderItem[];
+        const items = value as TOrderItem[];
+
         return (
           <span className="text-muted-foreground">
             {items.length} item{items.length !== 1 ? "s" : ""}
@@ -134,82 +109,104 @@ export default function OrdersTable({ orders }: OrdersTableProps) {
     {
       header: "Actions",
       accessor: "id",
-      cell: (value, row) => {
-        const order = row as Order;
+      cell: (value, order) => {
         const isAdmin = user?.role === Role.ADMIN;
         const isPending = order.status === OrderStatus.PENDING;
-        const isExpanded = expandedId === order.id;
+        const isExpanded = expandedId === (value as string);
+        const isCancelled = order.status === OrderStatus.CANCELLED;
+        const isDelivered = order.status === OrderStatus.DELIVERED;
+        const isDisabled = isCancelled || isDelivered;
 
-        if (isAdmin) {
-          return (
-            <div className="flex items-center justify-end gap-1">
-              <DropdownMenu
-                open={isExpanded}
-                onOpenChange={(open) => setExpandedId(open ? order.id : null)}
-              >
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    className="h-8 w-8"
-                    aria-label="Order actions"
-                  >
-                    <IconChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40">
+        return (
+          <div className="flex items-center justify-end gap-1">
+            <DropdownMenu
+              open={isExpanded}
+              onOpenChange={(open) =>
+                setExpandedId(open ? (value as string) : null)
+              }
+            >
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="h-8 w-8"
+                  aria-label="Order actions"
+                >
+                  <IconDotsVerticalFilled className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <OrderDetailModal
+                  order={order}
+                  trigger={
+                    <DropdownMenuItem
+                      className="flex items-center gap-2 cursor-pointer"
+                      title="View order details"
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      <IconEye className="h-4 w-4" />
+                      <span>View Details</span>
+                    </DropdownMenuItem>
+                  }
+                />
+
+                {isAdmin && (
+                  <UpdateOrderStatusModal
+                    orderId={order.id}
+                    orderNumber={order.orderNumber}
+                    currentStatus={order.status}
+                    onStatusUpdateSuccess={handleOrderChange}
+                    trigger={
+                      <DropdownMenuItem
+                        className="flex items-center gap-2 cursor-pointer"
+                        title={
+                          isDisabled
+                            ? "Can only modify pending, confirmed, and shipped orders"
+                            : "Modify order status"
+                        }
+                        disabled={isDisabled}
+                        onSelect={(e) => e.preventDefault()}
+                      >
+                        <IconEdit className="h-4 w-4" />
+                        <span>Modify Status</span>
+                      </DropdownMenuItem>
+                    }
+                  />
+                )}
+
+                {isPending && (
+                  <DeleteOrderModal
+                    orderId={order.id}
+                    orderNumber={order.orderNumber}
+                    totalAmount={order.totalAmount}
+                    onDeleteSuccess={handleOrderChange}
+                    trigger={
+                      <DropdownMenuItem
+                        variant="destructive"
+                        className="flex items-center gap-2 cursor-pointer"
+                        title="Delete order"
+                        onSelect={(e) => e.preventDefault()}
+                      >
+                        <IconTrash className="h-4 w-4" />
+                        <span>Delete</span>
+                      </DropdownMenuItem>
+                    }
+                  />
+                )}
+
+                {!isPending && (
                   <DropdownMenuItem
-                    onClick={() => handleView()}
-                    className="flex items-center gap-2"
-                  >
-                    <IconEye className="h-4 w-4" />
-                    <span>View Details</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleModifyStatus()}
-                    className="flex items-center gap-2"
-                  >
-                    <IconEdit className="h-4 w-4" />
-                    <span>Modify Status</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleDelete(order.status)}
                     variant="destructive"
                     className="flex items-center gap-2"
+                    disabled={true}
+                    title="Can only delete pending orders"
                   >
                     <IconTrash className="h-4 w-4" />
                     <span>Delete</span>
                   </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          );
-        }
-
-        // User actions
-        return (
-          <div className="flex items-center justify-end gap-1">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => handleView()}
-              title="View order details"
-              className="h-8 w-8"
-            >
-              <IconEye className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => handleDelete(order.status)}
-              disabled={!isPending}
-              title={
-                !isPending ? "Can only delete pending orders" : "Delete order"
-              }
-              className="h-8 w-8"
-            >
-              <IconTrash className="h-4 w-4" />
-            </Button>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         );
       },

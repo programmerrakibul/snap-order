@@ -115,7 +115,7 @@ export const getAllOrders = async () => {
 
   try {
     const user = await isAuthenticated();
-    
+
     if (!user) return [];
 
     const where = {
@@ -149,5 +149,86 @@ export const getAllOrders = async () => {
   } catch (error: unknown) {
     console.error("Error fetching orders: ", error);
     return [];
+  }
+};
+
+export const updateOrderStatusById = async (
+  orderId: string,
+  newStatus: OrderStatus,
+) => {
+  try {
+    const user = await isAuthenticated();
+
+    if (!user) {
+      return {
+        success: false,
+        message: "Unauthorized!",
+      };
+    }
+
+    if (user.role !== Role.ADMIN) {
+      return {
+        success: false,
+        message: "Forbidden! Only admins can modify order status.",
+      };
+    }
+
+    await prisma.order.update({
+      where: {
+        id: orderId,
+      },
+      data: {
+        status: newStatus,
+      },
+    });
+
+    // Invalidate cache
+    revalidatePath("/dashboard/orders");
+
+    return {
+      success: true,
+      message: "Order status updated successfully!",
+    };
+  } catch (error: unknown) {
+    console.error("Error updating order status: ", error);
+
+    return {
+      success: false,
+      message: "Failed to update order status!",
+    };
+  }
+};
+
+export const deleteOrderById = async (orderId: string) => {
+  try {
+    const user = await isAuthenticated();
+
+    if (!user)
+      return {
+        success: false,
+        message: "Unauthorized!",
+      };
+
+    await prisma.order.delete({
+      where: {
+        id: orderId,
+        userId: user.role === Role.ADMIN ? undefined : user.id,
+      },
+    });
+
+    // Invalidate cache
+    revalidatePath("/dashboard/orders");
+
+    return {
+      success: true,
+      message: "Order deleted successfully!",
+    };
+  } catch (error: unknown) {
+    console.error("Error deleting order: ", error);
+
+    return {
+      success: false,
+      message: "Failed to delete order!",
+    };
   }
 };
