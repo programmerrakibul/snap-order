@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { AppSidebar } from "@/components/shared/dashboard/app-sidebar";
 import { SiteHeader } from "@/components/shared/dashboard/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -29,9 +30,13 @@ export default function DashboardLayout({
         }
       >
         <TooltipProvider>
-          <AppSidebar variant="inset" />
+          <Suspense fallback={<div />}>
+            <AppSidebar variant="inset" />
+          </Suspense>
           <SidebarInset>
-            <SiteHeader />
+            <Suspense fallback={<div />}>
+              <SiteHeader />
+            </Suspense>
             {children}
           </SidebarInset>
         </TooltipProvider>

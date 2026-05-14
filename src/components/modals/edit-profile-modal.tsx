@@ -33,7 +33,7 @@ export default function EditProfileModal({ user }: EditProfileModalProps) {
         Edit Profile
       </Button>
 
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md data-[state=open]:zoom-in-0! data-[state=open]:duration-600">
         <DialogHeader>
           <DialogTitle>Edit Your Profile</DialogTitle>
           <DialogDescription>

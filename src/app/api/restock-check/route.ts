@@ -4,6 +4,7 @@ import {
   RestockStatus,
   type RestockRequestItem,
 } from "@/generated/prisma/client";
+import { revalidatePath } from "next/cache";
 
 export const POST = async () => {
   try {
@@ -67,10 +68,9 @@ export const POST = async () => {
           create: items,
         },
       },
-      include: {
-        items: true,
-      },
     });
+
+    revalidatePath("/dashboard/restock-products");
 
     return NextResponse.json({
       success: true,

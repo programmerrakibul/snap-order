@@ -119,5 +119,5 @@ export default async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/api/restock-check"],
+  matcher: ["/dashboard/:path*", `${PROTECTED_API_PATHS.RESTOCK_CHECK}`],
 };

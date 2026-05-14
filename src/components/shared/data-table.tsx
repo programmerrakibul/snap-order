@@ -55,9 +55,9 @@ export function DataTable<T extends object>({
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-muted/50">
-              {columns.map((column) => (
+              {columns.map((column, index) => (
                 <TableHead
-                  key={String(column.accessor)}
+                  key={String(index)}
                   className={`${column.className || ""} whitespace-nowrap`}
                 >
                   {column.header}
@@ -81,11 +81,12 @@ export function DataTable<T extends object>({
                   key={index}
                   className={striped && index % 2 === 0 ? "bg-muted/20" : ""}
                 >
-                  {columns.map((column) => {
+                  {columns.map((column, colIndex) => {
                     const value = row[column.accessor];
+
                     return (
                       <TableCell
-                        key={String(column.accessor)}
+                        key={String(colIndex)}
                         className={column.className}
                       >
                         {column.cell ? column.cell(value, row) : String(value)}
