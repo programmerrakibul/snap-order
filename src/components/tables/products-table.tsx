@@ -10,12 +10,15 @@ import { TProduct } from "@/types/product.interface";
 import { IconEye, IconShoppingCart } from "@tabler/icons-react";
 import OrderProductModal from "@/components/modals/order-product-modal";
 import ProductDetailModal from "@/components/modals/product-detail-modal";
+import useUserData from "@/hooks/useUserData";
+import { Role } from "@/generated/prisma/enums";
 
 interface ProductsTableProps {
   products: TProduct[];
 }
 
 export default function ProductsTable({ products }: ProductsTableProps) {
+  const { user } = useUserData();
   const columns: DataTableColumn<TProduct>[] = [
     {
       header: "Product Name",
@@ -88,19 +91,21 @@ export default function ProductsTable({ products }: ProductsTableProps) {
             }
           />
 
-          <OrderProductModal
-            product={row}
-            Trigger={
-              <Button
-                variant="ghost"
-                size="sm"
-                title="Order Product"
-                className="h-8 w-8 p-0 hover:bg-blue-500/10"
-              >
-                <IconShoppingCart className="h-4 w-4" />
-              </Button>
-            }
-          />
+          {user?.role === Role.USER && (
+            <OrderProductModal
+              product={row}
+              Trigger={
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  title="Order Product"
+                  className="h-8 w-8 p-0 hover:bg-blue-500/10"
+                >
+                  <IconShoppingCart className="h-4 w-4" />
+                </Button>
+              }
+            />
+          )}
         </div>
       ),
       className: "text-center",

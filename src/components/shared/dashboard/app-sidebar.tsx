@@ -1,15 +1,6 @@
 "use client";
 
 import {
-  IconLayoutDashboard,
-  IconShoppingCart,
-  IconUsers,
-  IconUserCircle,
-  IconPackageImport,
-  IconPackages,
-} from "@tabler/icons-react";
-
-import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -25,20 +16,8 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Logo from "@/components/ui/logo";
-import ProfileDropdown from "../profile-dropdown";
-
-const sidebarItems = [
-  { title: "Overview", href: "/dashboard", icon: IconLayoutDashboard },
-  {
-    title: "Add Product",
-    href: "/dashboard/add-products",
-    icon: IconPackageImport,
-  },
-  { title: "Products", href: "/dashboard/products", icon: IconPackages },
-  { title: "Orders", href: "/dashboard/orders", icon: IconShoppingCart },
-  { title: "Customers", href: "/dashboard/customers", icon: IconUsers },
-  { title: "Profile", href: "/dashboard/profile", icon: IconUserCircle },
-];
+import ProfileDropdown from "@/components/shared/profile-dropdown";
+import { sidebarItems } from "@/lib/constants";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();

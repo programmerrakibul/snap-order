@@ -16,6 +16,8 @@ import EditProfileModal from "@/components/modals/edit-profile-modal";
 import { Suspense } from "react";
 import ProfileLoading from "./loading";
 import { PageHeader } from "@/components/ui/page-header";
+import { Role } from "@/generated/prisma/enums";
+import { formatDate, getInitials } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Profile",
@@ -27,26 +29,8 @@ async function ProfilePageContent() {
 
   if (!user) return redirect("/auth/signin");
 
-  const getInitials = (name: string | null | undefined) => {
-    if (!name) return "U";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
-  const getRoleColor = (role: string) => {
-    return role === "ADMIN"
+  const getRoleColor = (role: Role) => {
+    return role === Role.ADMIN
       ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
       : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
   };
@@ -89,7 +73,7 @@ async function ProfilePageContent() {
                         variant="outline"
                         className={`text-xs font-medium px-3 py-1 rounded-full ${getRoleColor(user.role)}`}
                       >
-                        {user.role === "ADMIN" ? (
+                        {user.role === Role.ADMIN ? (
                           <>
                             <IconShield size={14} className="mr-1" />
                             Administrator

@@ -1,25 +1,23 @@
-import { clsx, type ClassValue } from "clsx"
-import { BadRequestError } from "http-errors-enhanced"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
+export const formatDate = (date: Date) => {
+  return new Date(date).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
 
-export async function uploadImage(imageFile:Blob) {
+export const getInitials = (value: string | null | undefined) => {
+  if (!value) return "U";
 
-  try {
-    
-    const formData = new FormData()
-
-    formData.append('file', imageFile)
-    
-  } catch (error) {
-
-    console.error(error);
-
-    throw new BadRequestError("Failed to upload image!");
-  }
-  
-}
+  return value
+    .replaceAll(/[^a-zA-Z0-9_]/g, "")
+    .toUpperCase()
+    .slice(0, 1);
+};

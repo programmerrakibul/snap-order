@@ -1,4 +1,15 @@
+import {
+  IconLayoutDashboard,
+  IconShoppingCart,
+  IconUsers,
+  IconUserCircle,
+  IconPackageImport,
+  IconPackages,
+  IconReload,
+} from "@tabler/icons-react";
+
 import { OrderStatus } from "@/generated/prisma/enums";
+import { TSideberItem } from "@/types";
 
 export const ACCESS_TOKEN_MAX_AGE = 15 * 60;
 export const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60;
@@ -28,3 +39,44 @@ export const STATUS_CONFIG: Record<
     label: "Cancelled",
   },
 };
+
+export const sidebarItems: TSideberItem[] = [
+  {
+    title: "Overview",
+    href: "/dashboard",
+    icon: IconLayoutDashboard,
+  },
+  {
+    title: "Add Product",
+    href: "/dashboard/add-products",
+    icon: IconPackageImport,
+    adminOnly: true,
+  },
+  {
+    title: "Products",
+    href: "/dashboard/products",
+    icon: IconPackages,
+  },
+  {
+    title: "Re-Stock Products",
+    href: "/dashboard/restock-products",
+    icon: IconReload,
+    adminOnly: true,
+  },
+  {
+    title: "Orders",
+    href: "/dashboard/orders",
+    icon: IconShoppingCart,
+  },
+  {
+    title: "Customers",
+    href: "/dashboard/customers",
+    icon: IconUsers,
+    adminOnly: true,
+  },
+  {
+    title: "Profile",
+    href: "/dashboard/profile",
+    icon: IconUserCircle,
+  },
+];

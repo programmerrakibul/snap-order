@@ -27,11 +27,13 @@ import { BadRequestError } from "http-errors-enhanced";
 import { getErrorResponse } from "@/lib/error";
 import { IconLoader } from "@tabler/icons-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const { replace } = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { handleSubmit, control, reset } = useForm<
@@ -76,6 +78,7 @@ export default function SignupForm({
         fileInputRef.current.value = "";
       }
 
+      replace("/dashboard");
       toast.success(message);
     } catch (error: unknown) {
       const { message } = getErrorResponse(error);
