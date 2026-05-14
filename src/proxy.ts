@@ -7,10 +7,16 @@ import {
 } from "@/lib/token";
 import { TokenExpiredError } from "jsonwebtoken";
 import { ITokenUser } from "@/types/user.interface";
-import { accessCookieData, refreshCookieData } from "@/lib/constants-server";
+import {
+  accessCookieData,
+  PROTECTED_API_PATHS,
+  refreshCookieData,
+} from "@/lib/constants-server";
 import { TokenType } from "@/types/token.interface";
+import { Role } from "./generated/prisma/enums";
 
 export default async function proxy(req: NextRequest) {
+  const restockPathBool = req.url.includes(PROTECTED_API_PATHS.RESTOCK_CHECK);
   const accessToken = req.cookies.get(TokenType.ACCESS)?.value;
   const refreshToken = req.cookies.get(TokenType.REFRESH)?.value;
   const callbackUrl = encodeURIComponent(new URL(req.url).toString());
@@ -62,9 +68,21 @@ export default async function proxy(req: NextRequest) {
     } catch (error: unknown) {
       console.error("Error refreshing tokens:", error);
 
-      // Refresh token invalid - clear cookies and redirect
-      const response = NextResponse.redirect(redirectUrl);
+      let response: NextResponse;
 
+      if (restockPathBool) {
+        response = NextResponse.json(
+          {
+            success: false,
+            message: "Authentication required!",
+          },
+          { status: 401 },
+        );
+      } else {
+        response = NextResponse.redirect(redirectUrl);
+      }
+
+      // Refresh token invalid - clear cookies
       response.cookies.delete(TokenType.ACCESS);
       response.cookies.delete(TokenType.REFRESH);
 
@@ -74,12 +92,32 @@ export default async function proxy(req: NextRequest) {
 
   // Redirect unauthenticated users to signin
   if (!user) {
+    if (restockPathBool) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Authentication required!",
+        },
+        { status: 401 },
+      );
+    }
+
     return NextResponse.redirect(redirectUrl);
+  }
+
+  if (restockPathBool && user.role !== Role.ADMIN) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Access denied!",
+      },
+      { status: 403 },
+    );
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard/:path*", "/api/restock-check"],
 };

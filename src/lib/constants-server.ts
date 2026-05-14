@@ -6,6 +6,10 @@ import { ACCESS_TOKEN_MAX_AGE, REFRESH_TOKEN_MAX_AGE } from "@/lib/constants";
 
 const inProduction = getEnv().NODE_ENV === NODE_ENV.PRODUCTION;
 
+export const PROTECTED_API_PATHS = {
+  RESTOCK_CHECK: "/api/restock-check",
+} as const;
+
 // Cookie options (server-only)
 export const cookieData: Pick<
   ResponseCookie,
