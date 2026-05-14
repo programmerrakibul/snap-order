@@ -7,6 +7,12 @@ datasource db {
   provider = "postgresql"
 }
 
+enum RestockStatus {
+  PENDING
+  APPROVED
+  CANCELLED
+}
+
 enum OrderStatus {
   PENDING
   CONFIRMED
@@ -21,35 +27,48 @@ enum Role {
 }
 
 model User {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  password    String
-  name        String?
-  photoURL    String?
-  phoneNumber String?
-  role        Role     @default(USER)
-  isVerified  Boolean  @default(false)
-  orders      Order[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now()) @updatedAt
-  lastLoggedIn   DateTime @default(now()) 
+  id              String           @id @default(cuid())
+  email           String           @unique
+  password        String
+  name            String?
+  photoURL        String?
+  phoneNumber     String?
+  role            Role             @default(USER)
+  isVerified      Boolean          @default(false)
+  isActive        Boolean          @default(true)
+  orders          Order[]
+  products        Product[]
+  restockRequests RestockRequest[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @default(now()) @updatedAt
+  lastLoggedIn    DateTime         @default(now())
 
   @@index([email])
   @@index([createdAt])
+  @@index([isActive])
 }
 
 model Product {
-  id          String      @id @default(cuid())
-  name        String      @unique
-  description String
-  price       Decimal     @db.Decimal(10, 2)
-  stock       Int         @default(0)
-  items       OrderItem[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id            String               @id @default(cuid())
+  name          String               @unique
+  description   String
+  price         Decimal              @db.Decimal(10, 2)
+  stock         Int                  @default(0)
+  minThreshold  Int                  @default(10)
+  maxThreshold  Int                  @default(100)
+  supplier      User?                @relation(fields: [supplierId], references: [id])
+  supplierId    String?
+  items         OrderItem[]
+  restockItems  RestockRequestItem[]
+  isActive      Boolean              @default(true)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @default(now()) @updatedAt
+  lastRestockedAt DateTime?
 
   @@index([name])
   @@index([createdAt])
+  @@index([supplierId])
+  @@index([isActive])
 }
 
 model Order {
@@ -62,7 +81,7 @@ model Order {
   items           OrderItem[]
   shippingAddress String
   createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  updatedAt       DateTime    @default(now()) @updatedAt
 
   @@index([orderNumber])
   @@index([createdAt])
@@ -79,9 +98,40 @@ model OrderItem {
   quantity  Int
   unitPrice Decimal  @db.Decimal(10, 2)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
 
   @@index([orderId])
+  @@index([productId])
+  @@index([createdAt])
+}
+
+model RestockRequest {
+  id          String               @id @default(cuid())
+  items       RestockRequestItem[]
+  status      RestockStatus        @default(PENDING)
+  stockedBy   User?                @relation(fields: [stockedById], references: [id])
+  stockedById String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @default(now()) @updatedAt
+  approvedAt  DateTime?
+  cancelledAt DateTime?
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([stockedById])
+}
+
+model RestockRequestItem {
+  id               String         @id @default(cuid())
+  restockRequestId String
+  restockRequest   RestockRequest @relation(fields: [restockRequestId], references: [id], onDelete: Cascade)
+  productId        String
+  product          Product        @relation(fields: [productId], references: [id])
+  quantity         Int
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @default(now()) @updatedAt
+
+  @@index([restockRequestId])
   @@index([productId])
   @@index([createdAt])
 }

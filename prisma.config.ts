@@ -7,8 +7,6 @@ import { defineConfig, env } from "prisma/config";
 
 config();
 
-console.log("DATABASE URL");
-
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {

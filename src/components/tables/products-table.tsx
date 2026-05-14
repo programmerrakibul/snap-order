@@ -30,7 +30,7 @@ export default function ProductsTable({ products }: ProductsTableProps) {
       accessor: "description",
       cell: (value) => (
         <span className="text-muted-foreground line-clamp-2 max-w-xs">
-          {value}
+          {value as string}
         </span>
       ),
     },
@@ -60,7 +60,7 @@ export default function ProductsTable({ products }: ProductsTableProps) {
       header: "Created",
       accessor: "createdAt",
       cell: (value) => {
-        const date = new Date(value);
+        const date = new Date(value as string);
         return (
           <span className="text-sm text-muted-foreground">
             {date.toLocaleDateString("en-US", {
