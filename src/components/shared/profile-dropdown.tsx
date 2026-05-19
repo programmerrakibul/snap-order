@@ -1,10 +1,9 @@
 "use client";
 
 import {
-  IconCreditCard,
+  IconBellRinging,
   IconDotsVertical,
   IconLogout,
-  IconNotification,
   IconUserCircle,
 } from "@tabler/icons-react";
 
@@ -125,7 +124,7 @@ export default function ProfileDropdown() {
                   toast.info("This feature in under construction!");
                 }}
               >
-                <IconNotification />
+                <IconBellRinging />
                 Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>

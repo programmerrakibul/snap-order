@@ -26,6 +26,27 @@ enum Role {
   ADMIN
 }
 
+enum NotificationType {
+  ORDER_CREATED
+  ORDER_STATUS_UPDATED
+  ORDER_CONFIRMED
+  ORDER_SHIPPED
+  ORDER_DELIVERED
+  ORDER_CANCELLED
+  ORDER_DELETED
+
+  PRODUCT_RESTOCKED
+  PRODUCT_DELETED
+  NEW_PRODUCT
+
+  AUTH_LOGIN_ALERT
+  AUTH_EMAIL_VERIFIED
+  AUTH_PASSWORD_CHANGED
+  AUTH_ACCOUNT_CREATED
+
+  SYSTEM_ANNOUNCEMENT
+}
+
 model User {
   id              String           @id @default(cuid())
   email           String           @unique
@@ -39,6 +60,7 @@ model User {
   orders          Order[]
   products        Product[]
   restockRequests RestockRequest[]
+  notifications   Notification[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @default(now()) @updatedAt
   lastLoggedIn    DateTime         @default(now())
@@ -49,20 +71,20 @@ model User {
 }
 
 model Product {
-  id            String               @id @default(cuid())
-  name          String               @unique
-  description   String
-  price         Decimal              @db.Decimal(10, 2)
-  stock         Int                  @default(0)
-  minThreshold  Int                  @default(10)
-  maxThreshold  Int                  @default(100)
-  supplier      User?                @relation(fields: [supplierId], references: [id])
-  supplierId    String?
-  items         OrderItem[]
-  restockItems  RestockRequestItem[]
-  isActive      Boolean              @default(true)
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @default(now()) @updatedAt
+  id              String               @id @default(cuid())
+  name            String               @unique
+  description     String
+  price           Decimal              @db.Decimal(10, 2)
+  stock           Int                  @default(0)
+  minThreshold    Int                  @default(10)
+  maxThreshold    Int                  @default(100)
+  supplier        User?                @relation(fields: [supplierId], references: [id])
+  supplierId      String?
+  items           OrderItem[]
+  restockItems    RestockRequestItem[]
+  isActive        Boolean              @default(true)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @default(now()) @updatedAt
   lastRestockedAt DateTime?
 
   @@index([name])
@@ -134,4 +156,23 @@ model RestockRequestItem {
   @@index([restockRequestId])
   @@index([productId])
   @@index([createdAt])
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  type        NotificationType
+  read        Boolean          @default(false)
+  readAt      DateTime?
+  metadata    Json?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @default(now()) @updatedAt
+  expiresAt   DateTime?
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@index([type])
 }
