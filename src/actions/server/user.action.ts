@@ -21,6 +21,7 @@ import { cookies } from "next/headers";
 import { getErrorResponse } from "@/lib/error";
 import { TUser } from "@/types/user.interface";
 import { cacheLife, revalidatePath } from "next/cache";
+import { TokenType } from "@/types/token.interface";
 
 export const createUser = async (formData: FormData) => {
   try {
@@ -227,22 +228,26 @@ export const updateUserData = async (formData: FormData) => {
 export const logoutUser = async () => {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("accessToken")?.value;
+    const token = cookieStore.get(TokenType.ACCESS)?.value;
 
     if (!token)
       throw new UnauthorizedError(
         "You have no permission to perform this action!",
       );
 
-    cookieStore.delete("accessToken");
-    cookieStore.delete("refreshToken");
+    cookieStore.delete(TokenType.ACCESS);
+    cookieStore.delete(TokenType.REFRESH);
 
     return {
       success: true,
       message: "Logout successful! See you later!",
     };
   } catch (error: unknown) {
-    const { message } = getErrorResponse(error);
-    throw new Error(message);
+    console.error("Error logging out:", error);
+
+    return {
+      success: false,
+      message: "Logout failed!",
+    };
   }
 };

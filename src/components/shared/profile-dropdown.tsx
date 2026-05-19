@@ -25,14 +25,38 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import useUserData from "@/hooks/useUserData";
+import { toast } from "sonner";
+import { logoutUser } from "@/actions/server/user.action";
+import { useRouter, usePathname } from "next/navigation";
+import { CLIENT_URL } from "@/lib/exportURL";
 
 export default function ProfileDropdown() {
+  const { push } = useRouter();
+  const pathname = usePathname();
   const { isMobile } = useSidebar();
   const { user, loading } = useUserData();
+  const callbackUrl = encodeURIComponent(CLIENT_URL + pathname);
 
   if (loading) return <div>Loading...</div>;
 
   if (!user) return null;
+
+  const handleLogout = async () => {
+    try {
+      const { success, message } = await logoutUser();
+
+      if (success) {
+        toast.success(message);
+        push(`/auth/signin?callbackUrl=${callbackUrl}`);
+      } else {
+        toast.error(message);
+      }
+    } catch (error: unknown) {
+      console.error(error);
+
+      toast.error("Something went wrong!");
+    }
+  };
 
   return (
     <SidebarMenu>
@@ -106,7 +130,7 @@ export default function ProfileDropdown() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
               <IconLogout />
               Log out
             </DropdownMenuItem>
