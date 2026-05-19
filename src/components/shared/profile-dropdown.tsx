@@ -116,15 +116,15 @@ export default function ProfileDropdown() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => push("/dashboard/profile")}>
                 <IconUserCircle />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <IconCreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  toast.info("This feature in under construction!");
+                }}
+              >
                 <IconNotification />
                 Notifications
               </DropdownMenuItem>
