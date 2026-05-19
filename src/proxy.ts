@@ -7,8 +7,13 @@ import {
 } from "@/lib/token";
 import { TokenExpiredError } from "jsonwebtoken";
 import { ITokenUser } from "@/types/user.interface";
-import { accessCookieData, refreshCookieData } from "@/lib/constants-server";
+import {
+  accessCookieData,
+  PROTECTED_PATHS,
+  refreshCookieData,
+} from "@/lib/constants-server";
 import { TokenType } from "@/types/token.interface";
+import { Role } from "./generated/prisma/enums";
 
 export default async function proxy(req: NextRequest) {
   const accessToken = req.cookies.get(TokenType.ACCESS)?.value;
@@ -75,6 +80,15 @@ export default async function proxy(req: NextRequest) {
   // Redirect unauthenticated users to signin
   if (!user) {
     return NextResponse.redirect(redirectUrl);
+  }
+
+  if (
+    PROTECTED_PATHS.ADMIN_ONLY.includes(req.nextUrl.pathname) &&
+    user.role !== Role.ADMIN
+  ) {
+    return NextResponse.redirect(new URL("/forbidden", req.url), {
+      status: 403,
+    });
   }
 
   return NextResponse.next();
