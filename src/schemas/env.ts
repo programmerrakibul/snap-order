@@ -59,6 +59,17 @@ export const envSchema = z.object({
     .trim()
     .min(32, "ACCESS_TOKEN_SECRET must be at least 32 characters long"),
 
+  VERIFY_TOKEN: z
+    .string({
+      error: (iss) => {
+        return iss.input === undefined
+          ? "VERIFY_TOKEN is required"
+          : "VERIFY_TOKEN is invalid";
+      },
+    })
+    .trim()
+    .min(32, "VERIFY_TOKEN must be at least 32 characters long"),
+
   NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: z
     .string("CLOUDINARY_CLOUD_NAME is required")
     .min(1, "CLOUDINARY_CLOUD_NAME is required"),
