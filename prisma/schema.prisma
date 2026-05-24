@@ -48,22 +48,29 @@ enum NotificationType {
 }
 
 model User {
-  id              String           @id @default(cuid())
-  email           String           @unique
-  password        String
-  name            String?
-  photoURL        String?
-  phoneNumber     String?
-  role            Role             @default(USER)
-  isVerified      Boolean          @default(false)
-  isActive        Boolean          @default(true)
+  id          String  @id @default(cuid())
+  email       String  @unique
+  password    String
+  name        String?
+  photoURL    String?
+  phoneNumber String?
+  role        Role    @default(USER)
+
+  isVerified           Boolean @default(false)
+  verificationCode     String?
+  verificationAttempts Int     @default(0)
+  isActive             Boolean @default(true)
+
   orders          Order[]
   products        Product[]
   restockRequests RestockRequest[]
   notifications   Notification[]
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @default(now()) @updatedAt
-  lastLoggedIn    DateTime         @default(now())
+
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @default(now()) @updatedAt
+  lastLoggedIn            DateTime  @default(now())
+  verificationCodeExpiry  DateTime?
+  lastVerificationAttempt DateTime?
 
   @@index([email])
   @@index([createdAt])
@@ -71,20 +78,22 @@ model User {
 }
 
 model Product {
-  id              String               @id @default(cuid())
-  name            String               @unique
-  description     String
-  price           Decimal              @db.Decimal(10, 2)
-  stock           Int                  @default(0)
-  minThreshold    Int                  @default(10)
-  maxThreshold    Int                  @default(100)
-  supplier        User?                @relation(fields: [supplierId], references: [id])
-  supplierId      String?
-  items           OrderItem[]
-  restockItems    RestockRequestItem[]
-  isActive        Boolean              @default(true)
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @default(now()) @updatedAt
+  id           String  @id @default(cuid())
+  name         String  @unique
+  description  String
+  price        Decimal @db.Decimal(10, 2)
+  stock        Int     @default(0)
+  minThreshold Int     @default(10)
+  maxThreshold Int     @default(100)
+  supplierId   String?
+  isActive     Boolean @default(true)
+
+  items        OrderItem[]
+  restockItems RestockRequestItem[]
+  supplier     User?                @relation(fields: [supplierId], references: [id])
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @default(now()) @updatedAt
   lastRestockedAt DateTime?
 
   @@index([name])
@@ -99,11 +108,13 @@ model Order {
   status          OrderStatus @default(PENDING)
   totalAmount     Decimal     @db.Decimal(10, 2)
   userId          String
-  user            User        @relation(fields: [userId], references: [id])
-  items           OrderItem[]
   shippingAddress String
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @default(now()) @updatedAt
+
+  user  User        @relation(fields: [userId], references: [id])
+  items OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   @@index([orderNumber])
   @@index([createdAt])
@@ -112,13 +123,15 @@ model Order {
 }
 
 model OrderItem {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   orderId   String
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId String
-  product   Product  @relation(fields: [productId], references: [id])
   quantity  Int
-  unitPrice Decimal  @db.Decimal(10, 2)
+  unitPrice Decimal @db.Decimal(10, 2)
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
@@ -128,13 +141,15 @@ model OrderItem {
 }
 
 model RestockRequest {
-  id          String               @id @default(cuid())
-  items       RestockRequestItem[]
-  status      RestockStatus        @default(PENDING)
-  stockedBy   User?                @relation(fields: [stockedById], references: [id])
+  id          String        @id @default(cuid())
+  status      RestockStatus @default(PENDING)
   stockedById String?
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @default(now()) @updatedAt
+
+  items     RestockRequestItem[]
+  stockedBy User?                @relation(fields: [stockedById], references: [id])
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
   approvedAt  DateTime?
   cancelledAt DateTime?
 
@@ -144,14 +159,16 @@ model RestockRequest {
 }
 
 model RestockRequestItem {
-  id               String         @id @default(cuid())
+  id               String @id @default(cuid())
   restockRequestId String
-  restockRequest   RestockRequest @relation(fields: [restockRequestId], references: [id], onDelete: Cascade)
   productId        String
-  product          Product        @relation(fields: [productId], references: [id])
   quantity         Int
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @default(now()) @updatedAt
+
+  product        Product        @relation(fields: [productId], references: [id])
+  restockRequest RestockRequest @relation(fields: [restockRequestId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   @@index([restockRequestId])
   @@index([productId])
@@ -161,16 +178,18 @@ model RestockRequestItem {
 model Notification {
   id          String           @id @default(cuid())
   userId      String
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   title       String
   description String
   type        NotificationType
   read        Boolean          @default(false)
-  readAt      DateTime?
   metadata    Json?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @default(now()) @updatedAt
-  expiresAt   DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  readAt    DateTime?
+  expiresAt DateTime?
 
   @@index([userId, read])
   @@index([userId, createdAt])

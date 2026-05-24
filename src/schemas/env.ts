@@ -59,34 +59,41 @@ export const envSchema = z.object({
     .trim()
     .min(32, "ACCESS_TOKEN_SECRET must be at least 32 characters long"),
 
-  VERIFY_TOKEN: z
-    .string({
-      error: (iss) => {
-        return iss.input === undefined
-          ? "VERIFY_TOKEN is required"
-          : "VERIFY_TOKEN is invalid";
-      },
-    })
-    .trim()
-    .min(32, "VERIFY_TOKEN must be at least 32 characters long"),
-
   NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: z
     .string("CLOUDINARY_CLOUD_NAME is required")
+    .trim()
     .min(1, "CLOUDINARY_CLOUD_NAME is required"),
 
   CLOUDINARY_API_KEY: z
     .string("CLOUDINARY_API_KEY is required")
+    .trim()
     .length(15, "API key must be exactly 15 characters")
     .regex(/^[a-zA-Z0-9]+$/, "API key must be alphanumeric"),
 
   CLOUDINARY_API_SECRET: z
     .string("CLOUDINARY_API_SECRET is required")
+    .trim()
     .min(1, "CLOUDINARY_API_SECRET is required"),
 
   NEXT_PUBLIC_SITE_URL: z
     .url("NEXT_PUBLIC_SITE_URL is invalid!")
     .trim()
     .min(1, "NEXT_PUBLIC_SITE_URL is required!"),
+
+  RESEND_API_KEY: z
+    .string("RESEND_API_KEY is required")
+    .trim()
+    .min(1, "RESEND_API_KEY is required!"),
+
+  EMAIL_FROM_NAME: z
+    .string("EMAIL_FROM_NAME is required")
+    .trim()
+    .min(1, "EMAIL_FROM_NAME is required!"),
+
+  EMAIL_FROM: z
+    .email("EMAIL_FROM is invalid!")
+    .trim()
+    .min(1, "EMAIL_FROM is required!"),
 });
 
 export type TEnv = z.infer<typeof envSchema>;
