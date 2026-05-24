@@ -1,27 +1,69 @@
 "use server";
 
+import { sendEmailVerificationOtp } from "@/lib/email";
+import { getErrorResponse } from "@/lib/error";
+import {
+  generateOtpCode,
+  getOtpExpiryDate,
+  hashOtpCode,
+  OTP_MAX_ATTEMPTS,
+  verifyOtpCode,
+} from "@/lib/otp";
+import { comparePassword, hashPassword } from "@/lib/password";
+import prisma from "@/lib/prisma";
 import {
   createUserSchema,
+  emailVerificationSchema,
   loginUserSchema,
+  resendVerificationSchema,
   TLoginUser,
   updateUserSchema,
 } from "@/schemas/user";
-import { uploadToCloudinary } from "./uploadToCloudinary";
-import prisma from "@/lib/prisma";
-import { comparePassword, hashPassword } from "@/lib/password";
+import { TokenType } from "@/types/token.interface";
+import { TUser, VerificationEmailUser } from "@/types/user.interface";
 import {
   BadRequestError,
   ConflictError,
   HttpError,
   UnauthorizedError,
 } from "http-errors-enhanced";
+import { cacheLife, revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { setCookie } from "./cookie";
 import { isAuthenticated } from "./isAuthenticated";
-import { cookies } from "next/headers";
-import { getErrorResponse } from "@/lib/error";
-import { TUser } from "@/types/user.interface";
-import { cacheLife, revalidatePath } from "next/cache";
-import { TokenType } from "@/types/token.interface";
+import { uploadToCloudinary } from "./uploadToCloudinary";
+
+const sendVerificationCode = async (user: VerificationEmailUser) => {
+  try {
+    const code = generateOtpCode();
+    const hashedCode = await hashOtpCode(code);
+
+    await prisma.user.update({
+      data: {
+        verificationCodeExpiry: getOtpExpiryDate(),
+        verificationAttempts: 0,
+        lastVerificationAttempt: null,
+        verificationCode: hashedCode,
+      },
+      where: {
+        id: user.id,
+        email: user.email,
+      },
+    });
+
+    const res = await sendEmailVerificationOtp({
+      to: user.email,
+      name: user.name,
+      code,
+    });
+
+    console.log({ res });
+  } catch (error: unknown) {
+    console.error(`Error sending verification code: ${error}`);
+
+    throw error;
+  }
+};
 
 export const createUser = async (formData: FormData) => {
   try {
@@ -56,17 +98,20 @@ export const createUser = async (formData: FormData) => {
       },
       select: {
         id: true,
+        name: true,
         email: true,
         role: true,
         isVerified: true,
       },
     });
 
-    await setCookie(result);
+    await sendVerificationCode(result);
 
     return {
       success: true,
-      message: "Registration successful!",
+      message: "Registration successful! Please verify your email.",
+      requiresVerification: true,
+      email: result.email,
     };
   } catch (error: unknown) {
     const { message } = getErrorResponse(error);
@@ -84,6 +129,7 @@ export const loginUser = async (payload: TLoginUser) => {
       },
       select: {
         id: true,
+        name: true,
         email: true,
         password: true,
         role: true,
@@ -99,6 +145,18 @@ export const loginUser = async (payload: TLoginUser) => {
 
     if (!isValidPassword) {
       throw new BadRequestError("Invalid credentials!");
+    }
+
+    if (!user.isVerified) {
+      await sendVerificationCode(user);
+
+      return {
+        success: false,
+        message:
+          "Your email is not verified. We sent a new verification code to your inbox.",
+        requiresVerification: true,
+        email: user.email,
+      };
     }
 
     await prisma.user.update({
@@ -118,9 +176,164 @@ export const loginUser = async (payload: TLoginUser) => {
       message: "Login successful! Welcome back!",
     };
   } catch (error: unknown) {
+    console.error(`Error logging in: ${error}`);
+
     const { message } = getErrorResponse(error);
 
     throw new Error(message);
+  }
+};
+
+export const verifyEmailOtp = async (payload: {
+  email: string;
+  code: string;
+}) => {
+  try {
+    const { email, code } = emailVerificationSchema.parse(payload);
+
+    const user = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        isVerified: true,
+        verificationCode: true,
+        verificationAttempts: true,
+        verificationCodeExpiry: true,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestError("Invalid verification code!");
+    }
+
+    if (user.isVerified) {
+      await setCookie({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        isVerified: user.isVerified,
+      });
+
+      return {
+        success: true,
+        message: "Email already verified.",
+      };
+    }
+
+    if (
+      !user.verificationCode ||
+      !user.verificationCodeExpiry ||
+      user.verificationCodeExpiry.getTime() < Date.now()
+    ) {
+      throw new BadRequestError(
+        "Verification code expired. Request a new one.",
+      );
+    }
+
+    if (user.verificationAttempts >= OTP_MAX_ATTEMPTS) {
+      throw new BadRequestError(
+        "This verification code has reached the attempt limit. Request a new one.",
+      );
+    }
+
+    const isValidCode = await verifyOtpCode(code, user.verificationCode);
+
+    if (!isValidCode) {
+      await prisma.user.update({
+        data: {
+          verificationAttempts: {
+            increment: 1,
+          },
+          lastVerificationAttempt: new Date(),
+        },
+        where: {
+          id: user.id,
+        },
+      });
+
+      throw new BadRequestError("Invalid verification code!");
+    }
+
+    const verifiedUser = await prisma.user.update({
+      data: {
+        isVerified: true,
+        verificationCode: null,
+        verificationCodeExpiry: null,
+        verificationAttempts: 0,
+        lastVerificationAttempt: new Date(),
+      },
+      where: {
+        id: user.id,
+        email: user.email,
+      },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        isVerified: true,
+      },
+    });
+
+    await setCookie(verifiedUser);
+
+    return {
+      success: true,
+      message: "Email verified successfully!",
+    };
+  } catch (error: unknown) {
+    const { message } = getErrorResponse(error);
+
+    return {
+      success: false,
+      message,
+    };
+  }
+};
+
+export const resendEmailVerification = async (payload: { email: string }) => {
+  try {
+    const { email } = resendVerificationSchema.parse(payload);
+
+    const user = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        isVerified: true,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestError("Unable to send verification code.");
+    }
+
+    if (user.isVerified) {
+      return {
+        success: true,
+        message: "Email already verified.",
+      };
+    }
+
+    await sendVerificationCode(user);
+
+    return {
+      success: true,
+      message: "A new verification code has been sent.",
+    };
+  } catch (error: unknown) {
+    const { message } = getErrorResponse(error);
+
+    return {
+      success: false,
+      message,
+    };
   }
 };
 

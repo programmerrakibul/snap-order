@@ -4,9 +4,9 @@ import {
   DataTable,
   type DataTableColumn,
 } from "@/components/shared/data-table";
-import { Badge } from "../ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { TableUser } from "@/types/user.interface";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Badge } from "../ui/badge";
 
 interface CustomersTableProps {
   users: TableUser[];
@@ -33,15 +33,15 @@ export default function CustomersTable({ users }: CustomersTableProps) {
     {
       header: "Email",
       accessor: "email",
-      cell: (value) => <span className="text-muted-foreground">{value}</span>,
+      cell: (value) => (
+        <span className="text-muted-foreground">{String(value)}</span>
+      ),
     },
     {
       header: "Phone Number",
       accessor: "phoneNumber",
       cell: (value) => (
-        <span className="text-muted-foreground">
-          {(value as string) || "N/A"}
-        </span>
+        <span className="text-muted-foreground">{String(value) || "N/A"}</span>
       ),
     },
     {
@@ -57,7 +57,7 @@ export default function CustomersTable({ users }: CustomersTableProps) {
       header: "Registered",
       accessor: "createdAt",
       cell: (value) => {
-        const date = new Date(value as string);
+        const date = new Date(String(value));
 
         return (
           <span className="text-sm text-muted-foreground">
@@ -74,7 +74,7 @@ export default function CustomersTable({ users }: CustomersTableProps) {
       header: "Last Login",
       accessor: "lastLoggedIn",
       cell: (value) => {
-        const date = new Date(value as string);
+        const date = new Date(String(value));
 
         return (
           <span className="text-sm text-muted-foreground">

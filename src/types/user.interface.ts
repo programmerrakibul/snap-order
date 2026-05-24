@@ -10,3 +10,7 @@ export type TableUser = Omit<
   updatedAt: string;
   lastLoggedIn: string;
 };
+
+export type VerificationEmailUser = Pick<TUser, "id" | "email"> & {
+  name?: TUser["name"];
+};

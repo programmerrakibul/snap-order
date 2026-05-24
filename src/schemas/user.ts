@@ -88,6 +88,18 @@ export const loginUserSchema = createUserSchema.pick({
   password: true,
 });
 
+export const emailVerificationSchema = z.object({
+  email: createUserSchema.shape.email,
+  code: z
+    .string("Verification code is required!")
+    .trim()
+    .regex(/^\d{6}$/, "Verification code must be 6 digits!"),
+});
+
+export const resendVerificationSchema = z.object({
+  email: createUserSchema.shape.email,
+});
+
 export const updateUserSchema = createUserSchema
   .pick({
     name: true,
@@ -99,4 +111,5 @@ export const updateUserSchema = createUserSchema
 export type TCreateUserInput = z.input<typeof createUserSchema>;
 export type TCreateUserOutput = z.output<typeof createUserSchema>;
 export type TLoginUser = z.infer<typeof loginUserSchema>;
+export type TEmailVerification = z.infer<typeof emailVerificationSchema>;
 export type TUpdateUser = z.infer<typeof updateUserSchema>;

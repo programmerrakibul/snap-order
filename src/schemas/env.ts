@@ -80,10 +80,20 @@ export const envSchema = z.object({
     .trim()
     .min(1, "NEXT_PUBLIC_SITE_URL is required!"),
 
-  RESEND_API_KEY: z
-    .string("RESEND_API_KEY is required")
+  GOOGLE_CLIENT_ID: z
+    .string("GOOGLE_CLIENT_ID is required")
     .trim()
-    .min(1, "RESEND_API_KEY is required!"),
+    .min(1, "GOOGLE_CLIENT_ID is required!"),
+
+  GOOGLE_CLIENT_SECRET: z
+    .string("GOOGLE_CLIENT_SECRET is required")
+    .trim()
+    .min(1, "GOOGLE_CLIENT_SECRET is required!"),
+
+  GOOGLE_REFRESH_TOKEN: z
+    .string("GOOGLE_REFRESH_TOKEN is required")
+    .trim()
+    .min(1, "GOOGLE_REFRESH_TOKEN is required!"),
 
   EMAIL_FROM_NAME: z
     .string("EMAIL_FROM_NAME is required")
