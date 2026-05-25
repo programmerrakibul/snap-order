@@ -1,4 +1,4 @@
-import { EmailLayout } from "@/emails/components/email-layout";
+import { EmailLayout } from "@/components/emails/email-layout";
 import { Heading, Text } from "react-email";
 
 type AccountCreatedEmailTemplateProps = {

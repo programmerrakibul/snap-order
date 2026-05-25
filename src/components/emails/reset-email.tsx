@@ -1,5 +1,5 @@
-import { EmailLayout } from "@/emails/components/email-layout";
-import { OtpCode } from "@/emails/components/otp-code";
+import { EmailLayout } from "@/components/emails/email-layout";
+import { OtpCode } from "@/components/emails/otp-code";
 import { OTP_EXPIRY_MINUTES } from "@/lib/otp";
 import { Heading, Text } from "react-email";
 

@@ -1,6 +1,6 @@
-import { AccountCreatedEmailTemplate } from "@/emails/account-created";
-import { EmailVerificationTemplate } from "@/emails/email-verification";
-import { ResetEmailTemplate } from "@/emails/reset-email";
+import { AccountCreatedEmailTemplate } from "@/components/emails/account-created";
+import { EmailVerificationTemplate } from "@/components/emails/email-verification";
+import { ResetEmailTemplate } from "@/components/emails/reset-email";
 import { getEnv } from "@/lib/env";
 import { render } from "@react-email/render";
 import nodemailer from "nodemailer";

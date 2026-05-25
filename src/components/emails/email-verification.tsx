@@ -1,8 +1,7 @@
-import * as React from "react";
-import { Heading, Text } from "react-email";
-import { EmailLayout } from "@/emails/components/email-layout";
-import { OtpCode } from "@/emails/components/otp-code";
+import { EmailLayout } from "@/components/emails/email-layout";
+import { OtpCode } from "@/components/emails/otp-code";
 import { OTP_EXPIRY_MINUTES } from "@/lib/otp";
+import { Heading, Text } from "react-email";
 
 type EmailVerificationTemplateProps = {
   name?: string | null;
@@ -19,8 +18,8 @@ export function EmailVerificationTemplate({
         Verify your email
       </Heading>
       <Text className="m-0 text-[15px] leading-6 text-gray-700">
-        Hi {name ? ` ${name}` : "there"}, please use the verification code below to
-        verify your email and finish securing your SnapOrder account.
+        Hi {name ? ` ${name}` : "there"}, please use the verification code below
+        to verify your email and finish securing your SnapOrder account.
       </Text>
       <OtpCode code={code} />
       <Text className="m-0 text-[15px] leading-6 text-gray-700">
