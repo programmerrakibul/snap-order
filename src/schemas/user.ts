@@ -108,8 +108,23 @@ export const updateUserSchema = createUserSchema
   })
   .partial();
 
+export const forgotPasswordSchema = z.object({
+  email: createUserSchema.shape.email,
+});
+
+export const resetPasswordSchema = z.object({
+  email: createUserSchema.shape.email,
+  code: z
+    .string("Reset code is required!")
+    .trim()
+    .regex(/^\d{6}$/, "Reset code must be 6 digits!"),
+  password: createUserSchema.shape.password,
+});
+
 export type TCreateUserInput = z.input<typeof createUserSchema>;
 export type TCreateUserOutput = z.output<typeof createUserSchema>;
 export type TLoginUser = z.infer<typeof loginUserSchema>;
 export type TEmailVerification = z.infer<typeof emailVerificationSchema>;
 export type TUpdateUser = z.infer<typeof updateUserSchema>;
+export type TForgotPassword = z.infer<typeof forgotPasswordSchema>;
+export type TResetPassword = z.infer<typeof resetPasswordSchema>;

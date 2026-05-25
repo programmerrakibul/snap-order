@@ -1,6 +1,6 @@
 "use server";
 
-import { sendEmailVerificationOtp } from "@/lib/email";
+import { sendEmailVerificationOtp, sendResetEmail } from "@/lib/email";
 import { getErrorResponse } from "@/lib/error";
 import {
   generateOtpCode,
@@ -14,8 +14,10 @@ import prisma from "@/lib/prisma";
 import {
   createUserSchema,
   emailVerificationSchema,
+  forgotPasswordSchema,
   loginUserSchema,
   resendVerificationSchema,
+  resetPasswordSchema,
   TLoginUser,
   updateUserSchema,
 } from "@/schemas/user";
@@ -464,3 +466,265 @@ export const logoutUser = async () => {
     };
   }
 };
+
+const sendForgotPasswordCode = async (user: { id: string; name: string | null; email: string }) => {
+  try {
+    const code = generateOtpCode();
+    const hashedCode = await hashOtpCode(code);
+
+    await prisma.user.update({
+      data: {
+        resetPasswordExpiry: getOtpExpiryDate(),
+        resetPasswordAttempts: 0,
+        lastResetAttempt: null,
+        resetPasswordCode: hashedCode,
+      },
+      where: {
+        id: user.id,
+        email: user.email,
+      },
+    });
+
+    await sendResetEmail({
+      to: user.email,
+      name: user.name,
+      code,
+    });
+  } catch (error: unknown) {
+    console.error(`Error sending forgot password code: ${error}`);
+    throw error;
+  }
+};
+
+export const forgotPassword = async (payload: { email: string }) => {
+  try {
+    const { email } = forgotPasswordSchema.parse(payload);
+
+    const user = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        isActive: true,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestError("User not found with this email!");
+    }
+
+    if (!user.isActive) {
+      throw new BadRequestError("Your account is suspended.");
+    }
+
+    await sendForgotPasswordCode(user);
+
+    return {
+      success: true,
+      message: "Reset code sent! Please check your email.",
+    };
+  } catch (error: unknown) {
+    const { message } = getErrorResponse(error);
+    throw new Error(message);
+  }
+};
+
+export const verifyForgotPasswordOtp = async (payload: {
+  email: string;
+  code: string;
+}) => {
+  try {
+    const { email, code } = emailVerificationSchema.parse(payload);
+
+    const user = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+      select: {
+        id: true,
+        email: true,
+        resetPasswordCode: true,
+        resetPasswordAttempts: true,
+        resetPasswordExpiry: true,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestError("Invalid verification code!");
+    }
+
+    if (
+      !user.resetPasswordCode ||
+      !user.resetPasswordExpiry ||
+      user.resetPasswordExpiry.getTime() < Date.now()
+    ) {
+      throw new BadRequestError("Reset code expired. Request a new one.");
+    }
+
+    if (user.resetPasswordAttempts >= OTP_MAX_ATTEMPTS) {
+      throw new BadRequestError(
+        "This reset code has reached the attempt limit. Request a new one.",
+      );
+    }
+
+    const isValidCode = await verifyOtpCode(code, user.resetPasswordCode);
+
+    if (!isValidCode) {
+      await prisma.user.update({
+        data: {
+          resetPasswordAttempts: {
+            increment: 1,
+          },
+          lastResetAttempt: new Date(),
+        },
+        where: {
+          id: user.id,
+        },
+      });
+
+      throw new BadRequestError("Invalid verification code!");
+    }
+
+    return {
+      success: true,
+      message: "Reset code verified successfully!",
+    };
+  } catch (error: unknown) {
+    const { message } = getErrorResponse(error);
+
+    return {
+      success: false,
+      message,
+    };
+  }
+};
+
+export const resetForgotPassword = async (payload: {
+  email: string;
+  code: string;
+  password: string;
+}) => {
+  try {
+    const { email, code, password } = resetPasswordSchema.parse(payload);
+
+    const user = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+      select: {
+        id: true,
+        email: true,
+        resetPasswordCode: true,
+        resetPasswordAttempts: true,
+        resetPasswordExpiry: true,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestError("Invalid reset request!");
+    }
+
+    if (
+      !user.resetPasswordCode ||
+      !user.resetPasswordExpiry ||
+      user.resetPasswordExpiry.getTime() < Date.now()
+    ) {
+      throw new BadRequestError("Reset code expired. Request a new one.");
+    }
+
+    if (user.resetPasswordAttempts >= OTP_MAX_ATTEMPTS) {
+      throw new BadRequestError(
+        "This reset code has reached the attempt limit. Request a new one.",
+      );
+    }
+
+    const isValidCode = await verifyOtpCode(code, user.resetPasswordCode);
+
+    if (!isValidCode) {
+      await prisma.user.update({
+        data: {
+          resetPasswordAttempts: {
+            increment: 1,
+          },
+          lastResetAttempt: new Date(),
+        },
+        where: {
+          id: user.id,
+        },
+      });
+
+      throw new BadRequestError("Invalid verification code!");
+    }
+
+    const hashedPassword = await hashPassword(password);
+
+    await prisma.user.update({
+      data: {
+        password: hashedPassword,
+        resetPasswordCode: null,
+        resetPasswordExpiry: null,
+        resetPasswordAttempts: 0,
+        lastResetAttempt: new Date(),
+      },
+      where: {
+        id: user.id,
+      },
+    });
+
+    return {
+      success: true,
+      message: "Password reset successfully! You can now log in.",
+    };
+  } catch (error: unknown) {
+    const { message } = getErrorResponse(error);
+
+    return {
+      success: false,
+      message,
+    };
+  }
+};
+
+export const resendForgotPasswordOtp = async (payload: { email: string }) => {
+  try {
+    const { email } = resendVerificationSchema.parse(payload);
+
+    const user = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        isActive: true,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestError("Unable to send reset code.");
+    }
+
+    if (!user.isActive) {
+      throw new BadRequestError("Your account is suspended.");
+    }
+
+    await sendForgotPasswordCode(user);
+
+    return {
+      success: true,
+      message: "A new password reset code has been sent.",
+    };
+  } catch (error: unknown) {
+    const { message } = getErrorResponse(error);
+
+    return {
+      success: false,
+      message,
+    };
+  }
+};
+
