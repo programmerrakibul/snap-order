@@ -21,7 +21,7 @@ import { IconLoader } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -33,7 +33,7 @@ export default function LoginForm({
   const { replace } = useRouter();
   const callbackUrl =
     searchParams.get("callbackUrl") || `${CLIENT_URL}/dashboard`;
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, startTransition] = useTransition();
   const [verificationEmail, setVerificationEmail] = useState("");
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
   const { handleSubmit, control, reset } = useForm<TLoginUser>({
@@ -44,27 +44,26 @@ export default function LoginForm({
     },
   });
 
-  const handleLogin = async (data: TLoginUser) => {
-    try {
-      setIsLoading(true);
-      const { success, message } = await loginUser(data);
+  const handleLogin = (data: TLoginUser) => {
+    startTransition(async () => {
+      try {
+        const { success, message } = await loginUser(data);
 
-      if (!success) {
-        setVerificationEmail(data.email);
-        setIsVerifyModalOpen(true);
-        toast.info(message);
-        return;
+        if (!success) {
+          setVerificationEmail(data.email);
+          setIsVerifyModalOpen(true);
+          toast.info(message);
+          return;
+        }
+
+        replace(callbackUrl);
+        reset();
+        toast.success(message);
+      } catch (error: unknown) {
+        const { message } = getErrorResponse(error);
+        toast.error(message);
       }
-
-      replace(callbackUrl);
-      reset();
-      toast.success(message);
-    } catch (error: unknown) {
-      const { message } = getErrorResponse(error);
-      toast.error(message);
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   return (
@@ -115,21 +114,29 @@ export default function LoginForm({
                   name="password"
                   control={control}
                   render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="password">Password *</FieldLabel>
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="••••••••"
-                        aria-invalid={fieldState.invalid}
-                        disabled={isLoading}
-                        {...field}
-                      />
+                    <>
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor="password">Password *</FieldLabel>
+                        <Input
+                          id="password"
+                          type="password"
+                          placeholder="••••••••"
+                          aria-invalid={fieldState.invalid}
+                          disabled={isLoading}
+                          {...field}
+                        />
 
-                      {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
-                    </Field>
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
+
+                        <FieldDescription className="text-xs">
+                          <Link href={"/auth/forgot-password"}>
+                            Forgotten password?
+                          </Link>
+                        </FieldDescription>
+                      </Field>
+                    </>
                   )}
                 />
 

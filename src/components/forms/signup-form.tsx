@@ -2,6 +2,14 @@
 
 import { createUser } from "@/actions/server/user.action";
 import { VerifyOtpModal } from "@/components/modals/verify-otp-modal";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { getErrorResponse } from "@/lib/error";
 import { cn } from "@/lib/utils";
 import {
@@ -16,26 +24,18 @@ import { BadRequestError } from "http-errors-enhanced";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "../ui/field";
-import { Input } from "../ui/input";
 
 export default function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const { replace } = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, startTransition] = useTransition();
   const [verificationEmail, setVerificationEmail] = useState("");
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -54,42 +54,40 @@ export default function SignupForm({
   });
 
   const handleCreateUser = async (data: TCreateUserInput) => {
-    try {
-      setIsLoading(true);
+    startTransition(async () => {
+      try {
+        const formData = new FormData();
+        formData.append("email", data.email);
+        formData.append("password", data.password);
 
-      const formData = new FormData();
-      formData.append("email", data.email);
-      formData.append("password", data.password);
+        if (data.name) formData.append("name", data.name);
+        if (data.phoneNumber) formData.append("phoneNumber", data.phoneNumber);
+        if (data.photoURL) formData.append("photoURL", data.photoURL);
 
-      if (data.name) formData.append("name", data.name);
-      if (data.phoneNumber) formData.append("phoneNumber", data.phoneNumber);
-      if (data.photoURL) formData.append("photoURL", data.photoURL);
+        const { success, message } = await createUser(formData);
 
-      const { success, message } = await createUser(formData);
+        if (!success) throw new BadRequestError("Registration failed!");
 
-      if (!success) throw new BadRequestError("Registration failed!");
+        reset({
+          name: "",
+          email: "",
+          password: "",
+          photoURL: undefined,
+          phoneNumber: "",
+        });
 
-      reset({
-        name: "",
-        email: "",
-        password: "",
-        photoURL: undefined,
-        phoneNumber: "",
-      });
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
 
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+        setVerificationEmail(data.email);
+        setIsVerifyModalOpen(true);
+        toast.success(message);
+      } catch (error: unknown) {
+        const { message } = getErrorResponse(error);
+        toast.error(message);
       }
-
-      setVerificationEmail(data.email);
-      setIsVerifyModalOpen(true);
-      toast.success(message);
-    } catch (error: unknown) {
-      const { message } = getErrorResponse(error);
-      toast.error(message);
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   return (
@@ -100,7 +98,7 @@ export default function SignupForm({
         onOpenChange={setIsVerifyModalOpen}
         onVerified={() => replace("/dashboard")}
       />
-      
+
       <div className={cn("flex flex-col gap-6", className)} {...props}>
         <Card className="overflow-hidden p-0">
           <CardContent className="grid p-0 md:grid-cols-2">
