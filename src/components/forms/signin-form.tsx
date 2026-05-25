@@ -35,6 +35,7 @@ export default function LoginForm({
     searchParams.get("callbackUrl") || `${CLIENT_URL}/dashboard`;
   const [isLoading, startTransition] = useTransition();
   const [verificationEmail, setVerificationEmail] = useState("");
+  const [forgotEmail, setForgotEmail] = useState<string | null>(null);
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
   const { handleSubmit, control, reset } = useForm<TLoginUser>({
     resolver: zodResolver(loginUserSchema),
@@ -58,6 +59,7 @@ export default function LoginForm({
 
         replace(callbackUrl);
         reset();
+        setForgotEmail(null);
         toast.success(message);
       } catch (error: unknown) {
         const { message } = getErrorResponse(error);
@@ -102,6 +104,12 @@ export default function LoginForm({
                         placeholder="john@example.com"
                         disabled={isLoading}
                         {...field}
+                        onChange={(e) => {
+                          const value = e.target.value;
+
+                          field.onChange(value);
+                          setForgotEmail(value);
+                        }}
                       />
                       {fieldState.invalid && (
                         <FieldError errors={[fieldState.error]} />
@@ -131,7 +139,9 @@ export default function LoginForm({
                         )}
 
                         <FieldDescription className="text-xs">
-                          <Link href={"/auth/forgot-password"}>
+                          <Link
+                            href={`/auth/forgot-password${forgotEmail ? `?email=${encodeURIComponent(forgotEmail)}` : ""}`}
+                          >
                             Forgotten password?
                           </Link>
                         </FieldDescription>

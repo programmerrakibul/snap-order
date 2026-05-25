@@ -1,4 +1,9 @@
 import Container from "@/components/shared/container";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Forgot Password",
+};
 
 const ForgotPasswordPage = () => {
   return (
