@@ -1,5 +1,7 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,13 +10,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Role } from "@/generated/prisma/enums";
+import useUserData from "@/hooks/useUserData";
 import { STATUS_CONFIG } from "@/lib/constants";
-import { IconEye } from "@tabler/icons-react";
 import { TOrder } from "@/types/order.interface";
+import { IconEye } from "@tabler/icons-react";
 
 interface OrderDetailModalProps {
   order: TOrder;
@@ -27,6 +29,8 @@ export default function OrderDetailModal({
 }: OrderDetailModalProps) {
   const config = STATUS_CONFIG[order.status];
   const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
+  const { user } = useUserData();
+  const isAdmin = user?.role === Role.ADMIN;
 
   return (
     <Dialog>
@@ -101,14 +105,38 @@ export default function OrderDetailModal({
 
             <Separator />
 
-            {/* Shipping Address */}
-            <div>
-              <label className="text-sm font-semibold text-muted-foreground">
-                Shipping Address
-              </label>
-              <p className="text-sm text-foreground mt-2 leading-relaxed p-3 bg-muted rounded-md">
-                {order.shippingAddress}
-              </p>
+            <div className="space-y-4">
+              {/* Customer Information */}
+              {isAdmin && (
+                <>
+                  <div>
+                    <label className="text-sm font-semibold text-muted-foreground">
+                      Customer Name
+                    </label>
+                    <p className="text-sm text-foreground mt-2 leading-relaxed p-3 bg-muted rounded-md">
+                      {order.user.name || "Unnamed customer"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-muted-foreground">
+                      Customer Email
+                    </label>
+                    <p className="text-sm text-foreground mt-2 leading-relaxed p-3 bg-muted rounded-md break-all">
+                      {order.user.email}
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {/* Shipping Address */}
+              <div>
+                <label className="text-sm font-semibold text-muted-foreground">
+                  Shipping Address
+                </label>
+                <p className="text-sm text-foreground mt-2 leading-relaxed p-3 bg-muted rounded-md">
+                  {order.shippingAddress}
+                </p>
+              </div>
             </div>
 
             <Separator />

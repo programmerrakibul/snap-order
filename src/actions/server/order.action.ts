@@ -1,7 +1,7 @@
 "use server";
 
-import prisma from "@/lib/prisma";
 import { OrderStatus, Role } from "@/generated/prisma/enums";
+import prisma from "@/lib/prisma";
 import { TCreateOrderInput, TOrderResponse } from "@/types/order.interface";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { BadRequestError, HttpError } from "http-errors-enhanced";
@@ -129,6 +129,12 @@ export const getAllOrders = async () => {
       },
       include: {
         items: true,
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
       },
     });
 

@@ -1,4 +1,5 @@
 import { OrderStatus } from "@/generated/prisma/enums";
+import { TUser } from "./user.interface";
 
 export type TCreateOrderItem = {
   productId: string;
@@ -36,4 +37,5 @@ export interface TOrder {
   createdAt: string;
   updatedAt: string;
   items: TOrderItem[];
+  user: Pick<TUser, "name" | "email">;
 }
