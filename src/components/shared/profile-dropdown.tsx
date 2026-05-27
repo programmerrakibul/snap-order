@@ -1,12 +1,12 @@
 "use client";
 
 import {
-  IconBellRinging,
   IconDotsVertical,
   IconLogout,
   IconUserCircle,
 } from "@tabler/icons-react";
 
+import { logoutUser } from "@/actions/server/user.action";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -24,10 +24,9 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import useUserData from "@/hooks/useUserData";
-import { toast } from "sonner";
-import { logoutUser } from "@/actions/server/user.action";
-import { useRouter, usePathname } from "next/navigation";
 import { CLIENT_URL } from "@/lib/exportURL";
+import { usePathname, useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function ProfileDropdown() {
   const { push } = useRouter();
@@ -118,14 +117,6 @@ export default function ProfileDropdown() {
               <DropdownMenuItem onClick={() => push("/dashboard/profile")}>
                 <IconUserCircle />
                 Account
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  toast.info("This feature in under construction!");
-                }}
-              >
-                <IconBellRinging />
-                Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

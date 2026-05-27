@@ -26,26 +26,6 @@ enum Role {
   ADMIN
 }
 
-enum NotificationType {
-  ORDER_CREATED
-  ORDER_STATUS_UPDATED
-  ORDER_CONFIRMED
-  ORDER_SHIPPED
-  ORDER_DELIVERED
-  ORDER_CANCELLED
-  ORDER_DELETED
-
-  PRODUCT_RESTOCKED
-  PRODUCT_DELETED
-  NEW_PRODUCT
-
-  AUTH_LOGIN_ALERT
-  AUTH_EMAIL_VERIFIED
-  AUTH_PASSWORD_CHANGED
-  AUTH_ACCOUNT_CREATED
-
-  SYSTEM_ANNOUNCEMENT
-}
 
 model User {
   id          String  @id @default(cuid())
@@ -71,7 +51,6 @@ model User {
   orders          Order[]
   products        Product[]
   restockRequests RestockRequest[]
-  notifications   Notification[]
 
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @default(now()) @updatedAt
@@ -147,6 +126,7 @@ model OrderItem {
   @@index([createdAt])
 }
 
+
 model RestockRequest {
   id          String        @id @default(cuid())
   status      RestockStatus @default(PENDING)
@@ -182,23 +162,4 @@ model RestockRequestItem {
   @@index([createdAt])
 }
 
-model Notification {
-  id          String           @id @default(cuid())
-  userId      String
-  title       String
-  description String
-  type        NotificationType
-  read        Boolean          @default(false)
-  metadata    Json?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @default(now()) @updatedAt
-  readAt    DateTime?
-  expiresAt DateTime?
-
-  @@index([userId, read])
-  @@index([userId, createdAt])
-  @@index([type])
-}

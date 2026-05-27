@@ -1,6 +1,10 @@
 "use server";
 
-import { sendEmailVerificationOtp, sendResetEmail } from "@/lib/email";
+import {
+  sendAccountCreatedEmail,
+  sendEmailVerificationOtp,
+  sendResetEmail,
+} from "@/lib/email";
 import { getErrorResponse } from "@/lib/error";
 import {
   generateOtpCode,
@@ -107,6 +111,7 @@ export const createUser = async (formData: FormData) => {
       },
     });
 
+    await sendAccountCreatedEmail({ to: result.email, name: result.name });
     await sendVerificationCode(result);
 
     return {
@@ -467,7 +472,11 @@ export const logoutUser = async () => {
   }
 };
 
-const sendForgotPasswordCode = async (user: { id: string; name: string | null; email: string }) => {
+const sendForgotPasswordCode = async (user: {
+  id: string;
+  name: string | null;
+  email: string;
+}) => {
   try {
     const code = generateOtpCode();
     const hashedCode = await hashOtpCode(code);
@@ -727,4 +736,3 @@ export const resendForgotPasswordOtp = async (payload: { email: string }) => {
     };
   }
 };
-
