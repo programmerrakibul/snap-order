@@ -86,9 +86,7 @@ export default async function proxy(req: NextRequest) {
     PROTECTED_PATHS.ADMIN_ONLY.includes(req.nextUrl.pathname) &&
     user.role !== Role.ADMIN
   ) {
-    return NextResponse.redirect(new URL("/forbidden", req.url), {
-      status: 403,
-    });
+    return NextResponse.redirect(new URL("/forbidden", req.url));
   }
 
   return NextResponse.next();
