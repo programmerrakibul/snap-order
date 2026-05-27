@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Snap Order
 
-## Getting Started
+Modern inventory and order management dashboard for customers and
+administrators.
 
-First, run the development server:
+Live: https://snap-order-sigma.vercel.app/
+
+## Overview
+
+Snap Order is a full-stack Next.js application built with TypeScript, Prisma,
+and PostgreSQL. It supports role-based access for end users and admins, secure
+email verification, order management, and inventory workflows.
+
+## Features
+
+- Authentication: registration, login, email verification, password reset
+- Role-based access: `USER` and `ADMIN`
+- Customer dashboard: order history, available products, profile management
+- Admin dashboard: product catalog, customer list, pending restock approvals,
+  order status management
+- Inventory controls: stock levels, min/max thresholds, product lifecycle
+- Order processing: line-item orders, stock deduction, order status updates
+- Restock workflow: pending requests, approval, and cancellation
+- Email notifications via Gmail OAuth
+
+## Database Design
+
+- `User`: email, password, role, verification state, reset token fields, last
+  login
+- `Product`: name, description, price, stock, min/max thresholds, supplier
+  relation
+- `Order`: order number, status, total amount, shipping address, customer
+  relation
+- `OrderItem`: order line items, quantity, unit price
+- `RestockRequest`: pending/approved/cancelled status, stocked-by admin,
+  timestamps
+- `RestockRequestItem`: requested product quantity per restock request
+
+## Tech Stack
+
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS
+- Prisma ORM
+- PostgreSQL
+- Cloudinary
+- Nodemailer with Gmail OAuth
+- Zod validation
+- shadcn/ui components
+
+## Setup
+
+1. Install dependencies
+
+```bash
+npm install
+```
+
+2. Add environment variables
+
+Required variables:
+
+- `NODE_ENV`
+- `DATABASE_URL`
+- `ACCESS_TOKEN_SECRET`
+- `REFRESH_TOKEN_SECRET`
+- `NEXT_PUBLIC_SITE_URL`
+- `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_REFRESH_TOKEN`
+- `EMAIL_FROM_NAME`
+- `EMAIL_FROM`
+
+3. Apply database migrations
+
+```bash
+npx prisma migrate deploy
+```
+
+4. Start development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Scripts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `npm run dev`
+- `npm run build`
+- `npm run start`
+- `npm run lint`
+- `npm run clean`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Contact
 
-## Learn More
+Md. Rakibul Islam
 
-To learn more about Next.js, take a look at the following resources:
+Email: rakibul00206@gmail.com
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+WhatsApp: +8801888419206
