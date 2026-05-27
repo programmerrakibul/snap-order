@@ -1,7 +1,15 @@
-import Link from "next/link";
+import { getUserOverviewData } from "@/actions/server/overview.action";
+import { MetricCard } from "@/components/cards/metric-card";
+import Container from "@/components/shared/container";
+import { Badge } from "@/components/ui/badge";
+import { BarChart } from "@/components/ui/bar-chart";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatusBreakdown } from "@/components/ui/status-breakdown";
+import { STATUS_CONFIG } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import {
   IconArrowRight,
-  IconBell,
   IconBox,
   IconChartBar,
   IconCheck,
@@ -10,16 +18,7 @@ import {
   IconPackage,
   IconShoppingBag,
 } from "@tabler/icons-react";
-import { getUserOverviewData } from "@/actions/server/overview.action";
-import Container from "@/components/shared/container";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { STATUS_CONFIG } from "@/lib/constants";
-import { cn } from "@/lib/utils";
-import { MetricCard } from "@/components/cards/metric-card";
-import { StatusBreakdown } from "@/components/ui/status-breakdown";
-import { BarChart } from "@/components/ui/bar-chart";
+import Link from "next/link";
 
 const money = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -66,7 +65,7 @@ const UserOverview = async () => {
             <MetricCard
               title="Available products"
               value={number.format(summary.availableProducts)}
-              detail={`${number.format(summary.unreadNotifications)} unread notifications`}
+              detail={`${number.format(summary.availableProducts)} products available to order.`}
               icon={IconPackage}
               tone="bg-violet-500/10 text-violet-600"
             />
@@ -221,24 +220,6 @@ const UserOverview = async () => {
                         No available products right now.
                       </p>
                     )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-lg shadow-sm">
-                <CardContent className="p-5">
-                  <div className="flex items-start gap-4">
-                    <div className="rounded-lg bg-primary/10 p-2.5 text-primary">
-                      <IconBell className="size-5" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Notifications</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        You have {number.format(summary.unreadNotifications)}{" "}
-                        unread notification
-                        {summary.unreadNotifications === 1 ? "" : "s"}.
-                      </p>
-                    </div>
                   </div>
                 </CardContent>
               </Card>

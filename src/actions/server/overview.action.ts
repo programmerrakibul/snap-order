@@ -1,7 +1,7 @@
 "use server";
 
-import prisma from "@/lib/prisma";
 import { OrderStatus, RestockStatus, Role } from "@/generated/prisma/enums";
+import prisma from "@/lib/prisma";
 import { isAuthenticated } from "./isAuthenticated";
 
 const startOfDay = (date: Date) =>
@@ -137,9 +137,13 @@ export const getAdminOverviewData = async () => {
     count: orders.filter((order) => order.status === status).length,
   }));
 
+  console.log(orders);
+
   const revenueByDay = days.map((date) => {
     const key = toDayKey(date);
-    const dayOrders = orders.filter((order) => toDayKey(order.createdAt) === key);
+    const dayOrders = orders.filter(
+      (order) => toDayKey(order.createdAt) === key,
+    );
 
     return {
       label: date.toLocaleDateString("en-US", { weekday: "short" }),
@@ -218,80 +222,69 @@ export const getUserOverviewData = async () => {
   const days = getLastDays(7);
   const fromDate = days[0];
 
-  const [
-    orders,
-    recentOrders,
-    availableProducts,
-    recentProducts,
-    unreadNotifications,
-  ] = await Promise.all([
-    prisma.order.findMany({
-      where: {
-        userId: user.id,
-        createdAt: {
-          gte: fromDate,
+  const [orders, recentOrders, availableProducts, recentProducts] =
+    await Promise.all([
+      prisma.order.findMany({
+        where: {
+          userId: user.id,
+          createdAt: {
+            gte: fromDate,
+          },
         },
-      },
-      select: {
-        status: true,
-        totalAmount: true,
-        createdAt: true,
-      },
-    }),
-    prisma.order.findMany({
-      where: {
-        userId: user.id,
-      },
-      take: 5,
-      orderBy: {
-        createdAt: "desc",
-      },
-      include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                name: true,
+        select: {
+          status: true,
+          totalAmount: true,
+          createdAt: true,
+        },
+      }),
+      prisma.order.findMany({
+        where: {
+          userId: user.id,
+        },
+        take: 5,
+        orderBy: {
+          createdAt: "desc",
+        },
+        include: {
+          items: {
+            include: {
+              product: {
+                select: {
+                  name: true,
+                },
               },
             },
           },
         },
-      },
-    }),
-    prisma.product.count({
-      where: {
-        isActive: true,
-        stock: {
-          gt: 0,
+      }),
+      prisma.product.count({
+        where: {
+          isActive: true,
+          stock: {
+            gt: 0,
+          },
         },
-      },
-    }),
-    prisma.product.findMany({
-      where: {
-        isActive: true,
-        stock: {
-          gt: 0,
+      }),
+      prisma.product.findMany({
+        where: {
+          isActive: true,
+          stock: {
+            gt: 0,
+          },
         },
-      },
-      take: 5,
-      orderBy: {
-        createdAt: "desc",
-      },
-      select: {
-        id: true,
-        name: true,
-        price: true,
-        stock: true,
-        createdAt: true,
-      },
-    }),
-    prisma.notification?.count({
-      where: {
-        userId: user.id,
-        read: false,
-      },
-    }),
-  ]);
+        take: 5,
+        orderBy: {
+          createdAt: "desc",
+        },
+        select: {
+          id: true,
+          name: true,
+          price: true,
+          stock: true,
+          createdAt: true,
+        },
+      }),
+    ]);
 
   const statusCounts = statusList.map((status) => ({
     status,
@@ -300,7 +293,9 @@ export const getUserOverviewData = async () => {
 
   const spendingByDay = days.map((date) => {
     const key = toDayKey(date);
-    const dayOrders = orders.filter((order) => toDayKey(order.createdAt) === key);
+    const dayOrders = orders.filter(
+      (order) => toDayKey(order.createdAt) === key,
+    );
 
     return {
       label: date.toLocaleDateString("en-US", { weekday: "short" }),
@@ -323,13 +318,13 @@ export const getUserOverviewData = async () => {
     summary: {
       totalSpent,
       totalOrders,
-      pendingOrders: orders.filter((order) => order.status === OrderStatus.PENDING)
-        .length,
+      pendingOrders: orders.filter(
+        (order) => order.status === OrderStatus.PENDING,
+      ).length,
       deliveredOrders: orders.filter(
         (order) => order.status === OrderStatus.DELIVERED,
       ).length,
       availableProducts,
-      unreadNotifications,
     },
     spendingByDay,
     statusCounts,
