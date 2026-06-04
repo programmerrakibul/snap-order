@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/ui/page-header";
 
 export const metadata: Metadata = {
   title: "Customers",
+  robots: { index: false, follow: false },
 };
 
 async function CustomersPageContent() {

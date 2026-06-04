@@ -22,6 +22,7 @@ import { formatDate, getInitials } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "Profile",
   description: "View and manage your profile",
+  robots: { index: false, follow: false },
 };
 
 async function ProfilePageContent() {

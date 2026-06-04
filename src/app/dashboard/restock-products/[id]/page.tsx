@@ -1,17 +1,18 @@
 import { getRestockRequestById } from "@/actions/server/restock.action";
-import Container from "@/components/shared/container";
 import RestockRequestDetail from "@/components/restock/restock-request-detail";
+import Container from "@/components/shared/container";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Restock Request Details",
+  robots: { index: false, follow: false },
 };
 
-const RestockRequestDetailPage = async ({
-  params,
-}: {
+interface props {
   params: Promise<{ id: string }>;
-}) => {
+}
+
+const RestockRequestDetailPage = async ({ params }: props) => {
   const { id } = await params;
   const request = await getRestockRequestById(id);
 

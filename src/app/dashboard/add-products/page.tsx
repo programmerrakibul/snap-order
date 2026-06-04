@@ -5,6 +5,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Add Product",
+  robots: { index: false, follow: false },
 };
 
 const AddProductPage = () => {
