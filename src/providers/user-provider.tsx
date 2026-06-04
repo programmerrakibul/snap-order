@@ -4,12 +4,12 @@ import { getUserData } from "@/actions/server/user.action";
 import { TUser } from "@/types/user.interface";
 import {
   createContext,
-  useState,
-  ReactNode,
-  useMemo,
   Dispatch,
+  ReactNode,
   SetStateAction,
   useEffect,
+  useMemo,
+  useState,
 } from "react";
 
 interface UserProviderProps {

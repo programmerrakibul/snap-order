@@ -13,14 +13,14 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
+import ProfileDropdown from "@/components/shared/profile-dropdown";
+import Logo from "@/components/ui/logo";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Role } from "@/generated/prisma/enums";
+import useUserData from "@/hooks/useUserData";
+import { sidebarItems } from "@/lib/constants";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import Logo from "@/components/ui/logo";
-import ProfileDropdown from "@/components/shared/profile-dropdown";
-import { sidebarItems } from "@/lib/constants";
-import useUserData from "@/hooks/useUserData";
-import { Role } from "@/generated/prisma/enums";
-import { IconLoader } from "@tabler/icons-react";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
@@ -42,18 +42,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        {loading ? (
-          <div className="flex h-full items-center justify-center">
-            <span className="flex items-center font-semibold text-lg text-primary">
-              <IconLoader className="animate-spin mr-2 size-7" />
-              <span>Loading...</span>
-            </span>
-          </div>
-        ) : (
-          <SidebarGroup>
-            <SidebarGroupContent className="flex flex-col gap-2">
-              <SidebarMenu>
-                {sidebarItems.map((item) => {
+        <SidebarGroup>
+          <SidebarGroupContent className="flex flex-col gap-2">
+            <SidebarMenu>
+              {loading ? (
+                <>
+                  {[...Array.from({ length: 7 })].map((_, index) => (
+                    <SidebarMenuItem key={index}>
+                      <SidebarMenuButton disabled>
+                        <Skeleton className="size-5 rounded bg-muted-foreground/20" />
+                        <Skeleton
+                          className={"w-full h-7 bg-muted-foreground/20"}
+                        />
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </>
+              ) : (
+                sidebarItems.map((item) => {
                   if (item.adminOnly && user?.role !== Role.ADMIN) return null;
 
                   return (
@@ -73,11 +79,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+                })
+              )}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
         <ProfileDropdown />
