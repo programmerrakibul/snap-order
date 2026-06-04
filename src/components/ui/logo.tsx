@@ -6,7 +6,9 @@ const Logo = ({ to = "/" }: { to?: string }) => {
     <>
       <Link href={to}>
         <Image
-          src={"/logo.png"}
+          src={
+            "https://res.cloudinary.com/dqh5dajig/image/upload/v1780568710/logo_gjx9bu.png"
+          }
           alt="SnapOrder logo"
           width={160}
           height={48}
