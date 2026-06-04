@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/ui/page-header";
 
 export const metadata: Metadata = {
   title: "Restock Products",
+  robots: { index: false, follow: false },
 };
 
 async function RestockProductsPageContent() {

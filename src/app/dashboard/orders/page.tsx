@@ -7,7 +7,9 @@ import Container from "@/components/shared/container";
 import OrdersTable from "@/components/tables/orders-table";
 
 export const metadata: Metadata = {
-  title: "Orders",
+  title: "Manage Orders",
+  description: "Track, filter, and process your incoming customer orders.",
+  robots: { index: false, follow: false },
 };
 
 async function OrdersPageContent() {

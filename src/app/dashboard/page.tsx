@@ -1,8 +1,19 @@
 import { getUserData } from "@/actions/server/user.action";
-import { PageHeader } from "@/components/ui/page-header";
-import { Role } from "@/generated/prisma/enums";
 import AdminOverview from "@/app/dashboard/_component/admin-overview";
 import UserOverview from "@/app/dashboard/_component/user-overview";
+import { PageHeader } from "@/components/ui/page-header";
+import { Role } from "@/generated/prisma/enums";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Dashboard Overview",
+  description:
+    "View your real-time sales metrics, recent orders, and performance analytics.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function Overview() {
   const user = await getUserData();
