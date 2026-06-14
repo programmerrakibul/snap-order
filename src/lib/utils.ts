@@ -13,11 +13,9 @@ export const formatDate = (date: Date) => {
   });
 };
 
-export const getInitials = (value: string | null | undefined) => {
-  if (!value) return "U";
-
+export const getInitials = (value: string) => {
   return value
     .replaceAll(/[^a-zA-Z0-9_]/g, "")
-    .toUpperCase()
-    .slice(0, 1);
+    .charAt(0)
+    .toUpperCase();
 };

@@ -31,17 +31,21 @@ export default function LoginForm({
 }: React.ComponentProps<"div">) {
   const searchParams = useSearchParams();
   const { replace } = useRouter();
+  const demoEmail = process.env.NEXT_PUBLIC_DEMO_EMAIL;
+  const demoPassword = process.env.NEXT_PUBLIC_DEMO_PASSWORD;
   const callbackUrl =
     searchParams.get("callbackUrl") || `${CLIENT_URL}/dashboard`;
   const [isLoading, startTransition] = useTransition();
   const [verificationEmail, setVerificationEmail] = useState("");
-  const [forgotEmail, setForgotEmail] = useState<string | null>(null);
+  const [forgotEmail, setForgotEmail] = useState<string | null>(
+    demoEmail || null,
+  );
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
   const { handleSubmit, control, reset } = useForm<TLoginUser>({
     resolver: zodResolver(loginUserSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: demoEmail || "",
+      password: demoPassword || "",
     },
   });
 
@@ -161,6 +165,13 @@ export default function LoginForm({
                       "Login"
                     )}
                   </Button>
+
+                  {demoEmail && demoPassword && (
+                    <div className="text-sm text-emerald-500 mt-2 flex items-center gap-2">
+                      <div className="w-1 h-1 rounded-full bg-emerald-500"></div>
+                      Demo credentials pre-filled!
+                    </div>
+                  )}
                 </Field>
 
                 <FieldDescription className="text-center">

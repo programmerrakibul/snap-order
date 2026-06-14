@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/sidebar";
 import useUserData from "@/hooks/useUserData";
 import { CLIENT_URL } from "@/lib/exportURL";
+import { getInitials } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Skeleton } from "../ui/skeleton";
@@ -55,7 +56,6 @@ export default function ProfileDropdown() {
   const { isMobile } = useSidebar();
   const { user, loading } = useUserData();
   const callbackUrl = encodeURIComponent(CLIENT_URL + pathname);
-
   const handleLogout = async () => {
     try {
       const { success, message } = await logoutUser();
@@ -88,10 +88,10 @@ export default function ProfileDropdown() {
                 <Avatar className="h-8 w-8 rounded-lg grayscale">
                   <AvatarImage
                     src={user?.photoURL || ""}
-                    alt={user?.name || user?.role}
+                    alt={user?.name || user?.email}
                   />
                   <AvatarFallback className="rounded-lg">
-                    {user?.name || user?.role}
+                    {getInitials(String(user?.name || user?.email))}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
@@ -117,10 +117,10 @@ export default function ProfileDropdown() {
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage
                     src={user?.photoURL || ""}
-                    alt={user?.name || user?.role}
+                    alt={user?.name || user?.email}
                   />
                   <AvatarFallback className="rounded-lg">
-                    {user?.name || user?.role}
+                    {getInitials(String(user?.name || user?.email))}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
