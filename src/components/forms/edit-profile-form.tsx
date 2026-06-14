@@ -87,7 +87,7 @@ export default function EditProfileForm({
         ...(data.phoneNumber && { phoneNumber: data.phoneNumber }),
         ...(previewImage && { photoURL: previewImage }),
       };
-      
+
       setUser(updatedUser);
 
       toast.success(response.message);
@@ -129,7 +129,7 @@ export default function EditProfileForm({
                 alt={user.name || "User"}
               />
               <AvatarFallback className="text-xl font-semibold">
-                {getInitials(user.name)}
+                {getInitials((user.name as string) || user.email)}
               </AvatarFallback>
             </Avatar>
             <button

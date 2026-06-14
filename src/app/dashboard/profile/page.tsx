@@ -1,23 +1,23 @@
 import { getUserData } from "@/actions/server/user.action";
-import { redirect } from "next/navigation";
-import { Metadata } from "next";
-import Container from "@/components/shared/container";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  IconMail,
-  IconPhone,
-  IconCalendar,
-  IconShield,
-  IconCheck,
-} from "@tabler/icons-react";
 import EditProfileModal from "@/components/modals/edit-profile-modal";
-import { Suspense } from "react";
-import ProfileLoading from "./loading";
+import Container from "@/components/shared/container";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { Role } from "@/generated/prisma/enums";
 import { formatDate, getInitials } from "@/lib/utils";
+import {
+  IconCalendar,
+  IconCheck,
+  IconMail,
+  IconPhone,
+  IconShield,
+} from "@tabler/icons-react";
+import { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import ProfileLoading from "./loading";
 
 export const metadata: Metadata = {
   title: "Profile",
@@ -54,11 +54,11 @@ async function ProfilePageContent() {
                   {/* Avatar */}
                   <Avatar size="lg" className="size-32">
                     <AvatarImage
-                      src={user.photoURL || undefined}
-                      alt={user.name || "User"}
+                      src={user.photoURL || ""}
+                      alt={user.name || user.email}
                     />
                     <AvatarFallback className="text-3xl font-semibold bg-linear-to-br from-primary/20 to-primary/10">
-                      {getInitials(user.name)}
+                      {getInitials(String(user.name || user.email))}
                     </AvatarFallback>
                   </Avatar>
 
