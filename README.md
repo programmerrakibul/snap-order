@@ -12,8 +12,8 @@
 
 Snap Order is a full-stack web application that streamlines inventory tracking,
 order processing, and restock management for small to medium businesses. Built
-with a modern Next.js stack, it provides separate dashboards for administrators
-and regular users with appropriate access controls.
+with a modern Next.js stack, it provides a public marketing homepage and separate
+dashboards for administrators and regular users with appropriate access controls.
 
 ### How It Works
 
@@ -47,6 +47,9 @@ and regular users with appropriate access controls.
 
 ## Features
 
+- **Marketing Homepage**: Public landing page with hero, feature highlights,
+  workflow overview, and RBAC/security sections; auth-aware CTAs (Sign In vs
+  Dashboard)
 - **Authentication**: Registration, login, email verification (OTP), password
   reset
 - **Role-Based Access**: USER and ADMIN roles with middleware-enforced route
@@ -97,7 +100,8 @@ npx prisma generate
 npm run dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000).
+Visit [http://localhost:3000](http://localhost:3000) for the public homepage, or
+sign in to access the dashboard.
 
 ---
 
@@ -144,10 +148,13 @@ src/
 ├── proxy.ts                    # Middleware — auth guard + token refresh
 ├── actions/server/             # Server Actions (auth, products, orders, restock)
 ├── app/                        # Next.js App Router pages
+│   ├── page.tsx                # Public marketing homepage
 │   ├── auth/                   # Login, registration, forgot password
 │   ├── dashboard/              # Protected pages (overview, products, orders, etc.)
 │   └── api/restock-check/      # Cron endpoint for automated restock
 ├── components/
+│   ├── home/                   # Homepage sections (hero, features, workflow, roles)
+│   ├── shared/                 # Navbar, footer, container, dashboard layout
 │   ├── emails/                 # React Email templates
 │   ├── forms/                  # Client form components
 │   ├── modals/                 # Dialog/modal components

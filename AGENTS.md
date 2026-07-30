@@ -45,6 +45,7 @@ src/
 │   ├── refreshToken.ts          # Token refresh logic
 │   └── uploadToCloudinary.ts    # Image upload helper
 ├── app/                         # Next.js App Router pages
+│   ├── page.tsx                 # Public marketing homepage
 │   ├── auth/                    # signin, signup, forgot-password
 │   ├── dashboard/               # Protected pages
 │   │   ├── layout.tsx           # Sidebar + SiteHeader + UserProvider
@@ -62,7 +63,8 @@ src/
 │   ├── forms/                   # Client forms (signin, signup, add-product, etc.)
 │   ├── modals/                  # Dialog components (OTP, order, detail, etc.)
 │   ├── restock/                 # Restock request detail
-│   ├── shared/                  # Container, DataTable, Sidebar, Header, etc.
+│   ├── home/                    # Homepage sections (hero, features, workflow, roles)
+│   ├── shared/                  # Container, Navbar, Footer, DataTable, Sidebar, etc.
 │   ├── tables/                  # Products, Orders, Customers, Restocks tables
 │   └── ui/                      # 25 shadcn/ui primitives
 ├── hooks/                       # useUserData, use-mobile
@@ -110,6 +112,19 @@ src/
 5. **Email Verification**: 6-digit OTP, bcrypt-hashed, 10min expiry, max 5
    attempts
 6. **Password Reset**: Two-stage — request OTP → verify OTP → set new password
+
+---
+
+## Homepage
+
+The public route `/` renders a marketing landing page (no redirect to dashboard).
+
+- **Layout**: `Navbar` → `Hero` → Features → Workflow → Roles → `Footer`
+- **Auth-aware CTAs**: `isAuthenticated()` (JWT from httpOnly cookies) drives Sign In /
+  Dashboard links in the navbar and hero, wrapped in `Suspense` for Partial
+  Prerendering with Cache Components
+- **Components**: `components/shared/navbar.tsx`, `footer.tsx`; section blocks
+  under `components/home/`
 
 ---
 
