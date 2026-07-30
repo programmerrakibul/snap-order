@@ -1,104 +1,187 @@
 # Snap Order
 
-Modern inventory and order management dashboard for customers and
-administrators.
+> Modern inventory and order management dashboard with role-based access, email
+> verification, and automated restock workflows.
 
-Live: https://snap-order-sigma.vercel.app/
+**Live Demo**:
+[snap-order-sigma.vercel.app](https://snap-order-sigma.vercel.app/)
+
+---
 
 ## Overview
 
-Snap Order is a full-stack Next.js application built with TypeScript, Prisma,
-and PostgreSQL. It supports role-based access for end users and admins, secure
-email verification, order management, and inventory workflows.
+Snap Order is a full-stack web application that streamlines inventory tracking,
+order processing, and restock management for small to medium businesses. Built
+with a modern Next.js stack, it provides separate dashboards for administrators
+and regular users with appropriate access controls.
 
-## Features
+### How It Works
 
-- Authentication: registration, login, email verification, password reset
-- Role-based access: `USER` and `ADMIN`
-- Customer dashboard: order history, available products, profile management
-- Admin dashboard: product catalog, customer list, pending restock approvals,
-  order status management
-- Inventory controls: stock levels, min/max thresholds, product lifecycle
-- Order processing: line-item orders, stock deduction, order status updates
-- Restock workflow: pending requests, approval, and cancellation
-- Email notifications via Gmail OAuth
+1. **Users** register, verify their email, browse available products, place
+   orders, and track order status.
+2. **Admins** manage the product catalog, oversee all customer orders, update
+   order statuses, and approve/cancel automated restock requests.
+3. **Restock automation** runs daily via a cron job — when product stock drops
+   below the minimum threshold, a restock request is automatically generated for
+   admin review.
+4. **Email notifications** are sent for account creation, email verification
+   (OTP), and password reset.
 
-## Database Design
-
-- `User`: email, password, role, verification state, reset token fields, last
-  login
-- `Product`: name, description, price, stock, min/max thresholds, supplier
-  relation
-- `Order`: order number, status, total amount, shipping address, customer
-  relation
-- `OrderItem`: order line items, quantity, unit price
-- `RestockRequest`: pending/approved/cancelled status, stocked-by admin,
-  timestamps
-- `RestockRequestItem`: requested product quantity per restock request
+---
 
 ## Tech Stack
 
-- Next.js 16
-- React 19
-- TypeScript
-- Tailwind CSS
-- Prisma ORM
-- PostgreSQL
-- Cloudinary
-- Nodemailer with Gmail OAuth
-- Zod validation
-- shadcn/ui components
+| Category   | Tech                                                                                                               |
+| ---------- | ------------------------------------------------------------------------------------------------------------------ |
+| Framework  | [Next.js 16](https://nextjs.org/) (App Router)                                                                     |
+| Language   | [TypeScript](https://www.typescriptlang.org/) (strict)                                                             |
+| UI         | [React 19](https://react.dev/) + [Tailwind CSS v4](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/) |
+| Database   | [PostgreSQL](https://www.postgresql.org/) via [Prisma ORM](https://www.prisma.io/)                                 |
+| Auth       | JWT (dual-token: access + refresh) + bcrypt                                                                        |
+| Validation | [Zod](https://zod.dev/)                                                                                            |
+| Email      | [Nodemailer](https://nodemailer.com/) (Gmail OAuth2) + [React Email](https://react.email/)                         |
+| Media      | [Cloudinary](https://cloudinary.com/)                                                                              |
+| Deployment | [Vercel](https://vercel.com/)                                                                                      |
 
-## Setup
+---
 
-1. Install dependencies
+## Features
+
+- **Authentication**: Registration, login, email verification (OTP), password
+  reset
+- **Role-Based Access**: USER and ADMIN roles with middleware-enforced route
+  protection
+- **Dashboard**: Role-specific overviews with key metrics
+- **Product Management**: Create products with stock and pricing
+- **Order Processing**: Place orders with atomic stock deduction, status
+  tracking (PENDING → CONFIRMED → SHIPPED → DELIVERED)
+- **Automated Restock**: Daily cron checks stock thresholds, creates pending
+  restock requests; admins approve with adjustable quantities
+- **Customer Management**: Admin view of all registered users
+- **Profile Management**: Update name, phone, and profile photo
+- **Email Notifications**: Welcome emails, OTP verification, password reset
+  codes
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- PostgreSQL database
+- Gmail account with OAuth2 credentials (for email)
+- Cloudinary account (for image uploads)
+
+### Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/programmerrakibul/snap-order.git
+cd snap-order
+
+# Install dependencies
 npm install
-```
 
-2. Add environment variables
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your credentials (see Environment Variables below)
 
-Required variables:
-
-- `NODE_ENV`
-- `DATABASE_URL`
-- `ACCESS_TOKEN_SECRET`
-- `REFRESH_TOKEN_SECRET`
-- `NEXT_PUBLIC_SITE_URL`
-- `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`
-- `CLOUDINARY_API_KEY`
-- `CLOUDINARY_API_SECRET`
-- `GOOGLE_CLIENT_ID`
-- `GOOGLE_CLIENT_SECRET`
-- `GOOGLE_REFRESH_TOKEN`
-- `EMAIL_FROM_NAME`
-- `EMAIL_FROM`
-
-3. Apply database migrations
-
-```bash
+# Apply database migrations
 npx prisma migrate deploy
-```
 
-4. Start development server
+# Generate Prisma client
+npx prisma generate
 
-```bash
+# Start development server
 npm run dev
 ```
 
+Visit [http://localhost:3000](http://localhost:3000).
+
+---
+
+## Environment Variables
+
+| Variable                            | Required | Description                                  |
+| ----------------------------------- | -------- | -------------------------------------------- |
+| `DATABASE_URL`                      | Yes      | PostgreSQL connection string                 |
+| `ACCESS_TOKEN_SECRET`               | Yes      | JWT secret for access tokens (min 32 chars)  |
+| `REFRESH_TOKEN_SECRET`              | Yes      | JWT secret for refresh tokens (min 32 chars) |
+| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | Yes      | Cloudinary cloud name                        |
+| `CLOUDINARY_API_KEY`                | Yes      | Cloudinary API key                           |
+| `CLOUDINARY_API_SECRET`             | Yes      | Cloudinary API secret                        |
+| `NEXT_PUBLIC_SITE_URL`              | Yes      | Application base URL                         |
+| `GOOGLE_CLIENT_ID`                  | Yes      | Gmail OAuth2 client ID                       |
+| `GOOGLE_CLIENT_SECRET`              | Yes      | Gmail OAuth2 client secret                   |
+| `GOOGLE_REFRESH_TOKEN`              | Yes      | Gmail OAuth2 refresh token                   |
+| `EMAIL_FROM_NAME`                   | Yes      | Sender display name                          |
+| `EMAIL_FROM`                        | Yes      | Sender email address                         |
+| `NODE_ENV`                          | Yes      | `development`, `production`, or `test`       |
+| `CRON_SECRET`                       | No       | Bearer token for restock-check API endpoint  |
+| `NEXT_PUBLIC_DEMO_EMAIL`            | No       | Pre-filled demo email on login form          |
+| `NEXT_PUBLIC_DEMO_PASSWORD`         | No       | Pre-filled demo password on login form       |
+
+---
+
 ## Scripts
 
-- `npm run dev`
-- `npm run build`
-- `npm run start`
-- `npm run lint`
-- `npm run clean`
+| Command         | Description                           |
+| --------------- | ------------------------------------- |
+| `npm run dev`   | Start development server on port 3000 |
+| `npm run build` | Create production build               |
+| `npm run start` | Start production server               |
+| `npm run lint`  | Run ESLint                            |
+| `npm run clean` | Remove build artifacts                |
+
+---
+
+## Project Structure
+
+```
+prisma/                         # Database schema and migrations
+src/
+├── proxy.ts                    # Middleware — auth guard + token refresh
+├── actions/server/             # Server Actions (auth, products, orders, restock)
+├── app/                        # Next.js App Router pages
+│   ├── auth/                   # Login, registration, forgot password
+│   ├── dashboard/              # Protected pages (overview, products, orders, etc.)
+│   └── api/restock-check/      # Cron endpoint for automated restock
+├── components/
+│   ├── emails/                 # React Email templates
+│   ├── forms/                  # Client form components
+│   ├── modals/                 # Dialog/modal components
+│   ├── tables/                 # Data table components
+│   └── ui/                     # shadcn/ui primitives
+├── lib/                        # Core utilities (Prisma, JWT, email, OTP, validation)
+├── providers/                  # React context providers
+├── schemas/                    # Zod validation schemas
+└── types/                      # TypeScript type definitions
+```
+
+---
+
+## Database Schema
+
+Six models: **User**, **Product**, **Order**, **OrderItem**, **RestockRequest**,
+**RestockRequestItem** — with full relational mapping for inventory, orders, and
+restock workflows. See `prisma/schema.prisma` for details.
+
+---
+
+## API Architecture
+
+Snap Order uses **Next.js Server Actions** for all data operations — there is no
+traditional REST API. The only exception is `GET/POST /api/restock-check` which
+is called by Vercel Cron. All server actions are defined in
+`src/actions/server/` and are callable directly from client components.
+
+---
 
 ## Contact
 
-Md. Rakibul Islam
+**Md. Rakibul Islam**
 
-Email: rakibul00206@gmail.com
-
-WhatsApp: +8801888419206
+- Portfolio: https://programmer-rakibul.vercel.app
+- Email: rakibul00206@gmail.com
+- WhatsApp: +880 188841-9206
