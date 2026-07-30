@@ -2,8 +2,8 @@
 
 import { RestockStatus, Role } from "@/generated/prisma/enums";
 import prisma from "@/lib/prisma";
-import { isAuthenticated } from "./isAuthenticated";
 import { TRestockRequest } from "@/types";
+import { isAuthenticated } from "./isAuthenticated";
 
 export const getRestockRequestItems = async (): Promise<TRestockRequest[]> => {
   try {
@@ -58,7 +58,7 @@ export const getRestockRequestItems = async (): Promise<TRestockRequest[]> => {
 };
 
 export const getRestockRequestById = async (
-  requestId: string | undefined,
+  requestId: string,
 ): Promise<TRestockRequest | null> => {
   if (!requestId) {
     return null;

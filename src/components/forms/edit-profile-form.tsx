@@ -1,17 +1,20 @@
 "use client";
 
-import React, { useRef, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-import {
-  updateUserSchema,
-  TUpdateUser,
-  ACCEPTED_IMAGE_TYPES,
-} from "@/schemas/user";
 import { updateUserData } from "@/actions/server/user.action";
-import { getErrorResponse } from "@/lib/error";
 import useUserData from "@/hooks/useUserData";
+import { getErrorResponse } from "@/lib/error";
+import {
+  ACCEPTED_IMAGE_TYPES,
+  TUpdateUser,
+  updateUserSchema,
+} from "@/schemas/user";
+import { TUser } from "@/types/user.interface";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { IconLoader, IconUpload } from "@tabler/icons-react";
+import React, { useRef, useState } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
+import { toast } from "sonner";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import {
   FieldDescription,
@@ -20,9 +23,6 @@ import {
   FieldLabel,
 } from "../ui/field";
 import { Input } from "../ui/input";
-import { IconLoader, IconUpload } from "@tabler/icons-react";
-import { TUser } from "@/types/user.interface";
-import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 
 interface EditProfileFormProps {
   user: TUser;
@@ -43,7 +43,6 @@ export default function EditProfileForm({
   const {
     handleSubmit,
     control,
-    watch,
     formState: { errors },
   } = useForm<TUpdateUser>({
     resolver: zodResolver(updateUserSchema),
@@ -54,7 +53,7 @@ export default function EditProfileForm({
     },
   });
 
-  const photoFile = watch("photoURL");
+  const photoFile = useWatch({ name: "photoURL", control });
 
   React.useEffect(() => {
     if (photoFile instanceof File) {
