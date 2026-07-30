@@ -9,12 +9,13 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  cacheComponents: true,
   experimental: {
     serverActions: {
       bodySizeLimit: "5mb",
     },
   },
-  cacheComponents: true,
+
 };
 
 export default nextConfig;
