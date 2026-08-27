@@ -1,8 +1,10 @@
 import Container from "@/components/shared/container";
 import Logo from "@/components/ui/logo";
+import { cacheLife } from "next/cache";
 
 const timestamp = async () => {
   "use cache";
+  cacheLife("max");
 
   return new Date();
 };

@@ -1,0 +1,35 @@
+model User {
+  id          String  @id @default(cuid())
+  email       String  @unique
+  password    String
+  name        String?
+  photoURL    String?
+  phoneNumber String?
+  role        Role    @default(USER)
+  isActive             Boolean @default(true)
+  isVerified           Boolean @default(false)
+
+  verificationCode     String?
+  verificationAttempts Int     @default(0)
+  verificationCodeExpiry  DateTime?
+  lastVerificationAttempt DateTime?
+
+  resetPasswordCode        String?
+  resetPasswordAttempts    Int     @default(0)
+  resetPasswordExpiry      DateTime?
+  lastResetAttempt         DateTime?
+
+  orders          Order[]
+  products        Product[]
+  restockRequests RestockRequest[]
+
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @default(now()) @updatedAt
+  lastLoggedIn            DateTime  @default(now())
+
+
+
+  @@index([email])
+  @@index([createdAt])
+  @@index([isActive])
+}
