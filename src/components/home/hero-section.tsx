@@ -1,37 +1,25 @@
-import { isAuthenticated } from "@/actions/server/isAuthenticated";
+"use client";
+
 import Container from "@/components/shared/container";
 import { Button } from "@/components/ui/button";
+import useUserData from "@/hooks/useUserData";
 import Link from "next/link";
-import { Suspense } from "react";
 
-async function HeroActions() {
-  const user = await isAuthenticated();
+function HeroActions() {
+  const { authenticated } = useUserData();
 
   return (
     <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
       <Button asChild size="lg">
-        <Link href={user ? "/dashboard" : "/auth/signin"}>
-          {user ? "Go to Dashboard" : "Get Started"}
+        <Link href={authenticated ? "/dashboard" : "/auth/signin"}>
+          {authenticated ? "Go to Dashboard" : "Get Started"}
         </Link>
       </Button>
-      {!user && (
+      {!authenticated && (
         <Button asChild variant="outline" size="lg">
           <Link href="/auth/signup">Create Account</Link>
         </Button>
       )}
-    </div>
-  );
-}
-
-function HeroActionsFallback() {
-  return (
-    <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-      <Button asChild size="lg">
-        <Link href="/auth/signin">Get Started</Link>
-      </Button>
-      <Button asChild variant="outline" size="lg">
-        <Link href="/auth/signup">Create Account</Link>
-      </Button>
     </div>
   );
 }
@@ -54,9 +42,7 @@ export default function HeroSection() {
             role-based permissions — from placement to fulfillment, with clarity
             at every step.
           </p>
-          <Suspense fallback={<HeroActionsFallback />}>
-            <HeroActions />
-          </Suspense>
+          <HeroActions />
         </div>
       </Container>
     </section>
