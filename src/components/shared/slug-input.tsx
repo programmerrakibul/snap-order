@@ -27,7 +27,9 @@ const SlugInput = ({
         type="text"
         name={name}
         value={value ?? ""}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+          onChange(event.target.value)
+        }
         onBlur={onBlur}
         placeholder={placeholder}
         disabled={disabled}

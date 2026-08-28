@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono, Figtree } from "next/font/google";
-import "./globals.css";
 import { cn } from "@/lib/utils";
-import { Toaster } from "sonner";
 import { ThemeProvider } from "@/providers/theme-provider";
+import UserProvider from "@/providers/user-provider";
+import type { Metadata } from "next";
+import { Figtree, Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "sonner";
+import "./globals.css";
 
 const geistMonoHeading = Geist_Mono({
   subsets: ["latin"],
@@ -86,10 +87,12 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
-          <ThemeProvider>
+        <ThemeProvider>
+          <UserProvider>
             {children}
             <Toaster />
-          </ThemeProvider>
+          </UserProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
