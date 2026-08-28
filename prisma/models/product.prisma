@@ -1,24 +1,25 @@
 model Product {
-  id           String  @id @default(cuid())
-  name         String  @unique
-  description  String
-  price        Decimal @db.Decimal(10, 2)
-  stock        Int     @default(0)
-  minThreshold Int     @default(10)
-  maxThreshold Int     @default(100)
-  supplierId   String?
-  isActive     Boolean @default(true)
+  id          String         @id @default(cuid())
+  name        String
+  description String
+  brand       String?
+  images      ProductImage[]
+  tags        String[]
 
-  items        OrderItem[]
-  restockItems RestockRequestItem[]
-  supplier     User?                @relation(fields: [supplierId], references: [id])
+  categoryId String
+  category   Category         @relation(fields: [categoryId], references: [id])
+  variants   ProductVariant[]
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @default(now()) @updatedAt
-  lastRestockedAt DateTime?
+  slug       String        @unique
+  isFeatured Boolean       @default(false)
+  status     ProductStatus @default(DRAFT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   @@index([name])
+  @@index([categoryId])
+  @@index([isFeatured])
   @@index([createdAt])
-  @@index([supplierId])
-  @@index([isActive])
+  @@index([status])
 }

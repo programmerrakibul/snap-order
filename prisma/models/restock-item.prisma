@@ -1,0 +1,16 @@
+model RestockRequestItem {
+  id               String @id @default(cuid())
+  restockRequestId String
+  productVariantId String
+  quantity         Int
+
+  productVariant        ProductVariant @relation(fields: [productVariantId], references: [id])
+  restockRequest RestockRequest @relation(fields: [restockRequestId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([restockRequestId])
+  @@index([productVariantId])
+  @@index([createdAt])
+}

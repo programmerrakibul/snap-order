@@ -6,30 +6,29 @@ model User {
   photoURL    String?
   phoneNumber String?
   role        Role    @default(USER)
-  isActive             Boolean @default(true)
-  isVerified           Boolean @default(false)
+  isActive    Boolean @default(true)
+  isVerified  Boolean @default(false)
 
-  verificationCode     String?
-  verificationAttempts Int     @default(0)
+  verificationCode        String?
+  verificationAttempts    Int       @default(0)
   verificationCodeExpiry  DateTime?
   lastVerificationAttempt DateTime?
 
-  resetPasswordCode        String?
-  resetPasswordAttempts    Int     @default(0)
-  resetPasswordExpiry      DateTime?
-  lastResetAttempt         DateTime?
+  resetPasswordCode     String?
+  resetPasswordAttempts Int       @default(0)
+  resetPasswordExpiry   DateTime?
+  lastResetAttempt      DateTime?
 
   orders          Order[]
-  products        Product[]
+  productVariants ProductVariant[]
   restockRequests RestockRequest[]
 
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @default(now()) @updatedAt
-  lastLoggedIn            DateTime  @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+  lastLoggedIn DateTime @default(now())
 
-
-
-  @@index([email])
   @@index([createdAt])
   @@index([isActive])
+  @@index([isVerified])
+  @@index([role])
 }
