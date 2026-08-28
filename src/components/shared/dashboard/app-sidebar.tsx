@@ -47,7 +47,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenu>
               {loading ? (
                 <>
-                  {[...Array.from({ length: 7 })].map((_, index) => (
+                  {[...Array.from({ length: 8 })].map((_, index) => (
                     <SidebarMenuItem key={index}>
                       <SidebarMenuButton disabled>
                         <Skeleton className="size-5 rounded bg-muted-foreground/20" />

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createProduct } from "@/actions/server/product.action";
 import {
@@ -9,6 +9,7 @@ import {
   TProductInput,
   TProductOutput,
 } from "@/schemas/product";
+import { generateSlug } from "@/lib/slug";
 import {
   Field,
   FieldLabel,
@@ -21,8 +22,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { IconLoader } from "@tabler/icons-react";
+import { IconLoader, IconPlus } from "@tabler/icons-react";
 import { DiscountType } from "@/generated/prisma/enums";
+import { TCategory } from "@/types";
+import SlugInput from "@/components/shared/slug-input";
+import ImageUpload from "@/components/shared/image-upload";
 import {
   Select,
   SelectContent,
@@ -31,14 +35,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const AddProductForm = () => {
+interface AddProductFormProps {
+  categories: TCategory[];
+}
+
+const AddProductForm = ({ categories }: AddProductFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [categoryMode, setCategoryMode] = useState<"select" | "new">(
+    categories.length > 0 ? "select" : "new",
+  );
 
   const form = useForm<TProductInput, TProductOutput>({
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: "",
       description: "",
+      slug: "",
       categoryName: "",
       sku: "",
       stock: 0,
@@ -49,6 +61,17 @@ const AddProductForm = () => {
     },
     mode: "onBlur",
   });
+
+  const watchedName = useWatch({ control: form.control, name: "name" });
+  const watchedSlug = useWatch({ control: form.control, name: "slug" });
+
+  useEffect(() => {
+    const auto = generateSlug(watchedName);
+
+    if (auto && !watchedSlug) {
+      form.setValue("slug", auto, { shouldValidate: false });
+    }
+  }, [watchedName, watchedSlug, form]);
 
   const onSubmit = async (data: TProductInput) => {
     setIsLoading(true);
@@ -92,6 +115,30 @@ const AddProductForm = () => {
                         aria-invalid={fieldState.invalid}
                         disabled={isLoading}
                         className="h-10 sm:h-11 text-sm sm:text-base"
+                      />
+
+                      {fieldState.error && (
+                        <FieldError>{fieldState.error.message}</FieldError>
+                      )}
+                    </FieldContent>
+                  </Field>
+                )}
+              />
+
+              <Controller
+                control={form.control}
+                name="slug"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Slug</FieldLabel>
+                    <FieldContent>
+                      <SlugInput
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        disabled={isLoading}
+                        invalid={fieldState.invalid}
                       />
 
                       {fieldState.error && (
@@ -155,13 +202,79 @@ const AddProductForm = () => {
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel>Category</FieldLabel>
                       <FieldContent>
-                        <Input
-                          placeholder="Enter category name"
-                          {...field}
-                          disabled={isLoading}
-                          aria-invalid={fieldState.invalid}
-                          className="h-10 sm:h-11 text-sm sm:text-base"
-                        />
+                        {categoryMode === "select" && categories.length > 0 ? (
+                          <>
+                            <Select
+                              value={field.value || "none"}
+                              onValueChange={(value) => {
+                                if (value === "__create__") {
+                                  setCategoryMode("new");
+                                  field.onChange("");
+                                  return;
+                                }
+
+                                field.onChange(
+                                  value === "none" ? "" : value,
+                                );
+                              }}
+                              disabled={isLoading}
+                            >
+                              <SelectTrigger className="h-10 sm:h-11 w-full text-sm sm:text-base">
+                                <SelectValue placeholder="Select a category" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">
+                                  Select a category
+                                </SelectItem>
+                                {categories.map((category) => (
+                                  <SelectItem key={category.id} value={category.name}>
+                                    {category.name}
+                                  </SelectItem>
+                                ))}
+                                <SelectItem value="__create__">
+                                  <span className="inline-flex items-center gap-1.5">
+                                    <IconPlus className="h-3.5 w-3.5" />
+                                    Create new category
+                                  </span>
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+
+                            <button
+                              type="button"
+                              onClick={() => setCategoryMode("new")}
+                              disabled={isLoading}
+                              className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                            >
+                              <IconPlus className="h-3.5 w-3.5" />
+                              Or create a new category
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <Input
+                              placeholder="Enter category name"
+                              {...field}
+                              disabled={isLoading}
+                              aria-invalid={fieldState.invalid}
+                              className="h-10 sm:h-11 text-sm sm:text-base"
+                            />
+
+                            {categories.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCategoryMode("select");
+                                  field.onChange("");
+                                }}
+                                disabled={isLoading}
+                                className="mt-2 text-sm font-medium text-primary hover:underline"
+                              >
+                                Pick an existing category
+                              </button>
+                            )}
+                          </>
+                        )}
 
                         {fieldState.error && (
                           <FieldError>{fieldState.error.message}</FieldError>
@@ -199,13 +312,13 @@ const AddProductForm = () => {
                 name="imageUrl"
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Image URL</FieldLabel>
+                    <FieldLabel>Product Image</FieldLabel>
                     <FieldContent>
-                      <Input
-                        placeholder="https://example.com/image.jpg (optional)"
-                        {...field}
+                      <ImageUpload
+                        value={field.value}
+                        onChange={field.onChange}
+                        folder="products"
                         disabled={isLoading}
-                        className="h-10 sm:h-11 text-sm sm:text-base"
                       />
 
                       {fieldState.error && (

@@ -1,17 +1,11 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { generateSlug, uniqueSlug } from "@/lib/slug";
 import { ProductStatus } from "@/generated/prisma/enums";
 import { productSchema } from "@/schemas/product";
 import { BadRequestError, HttpError } from "http-errors-enhanced";
 import { cacheLife, revalidatePath } from "next/cache";
-
-const toSlug = (name: string) =>
-  name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
 
 export const createProduct = async (data: unknown) => {
   try {
@@ -28,7 +22,13 @@ export const createProduct = async (data: unknown) => {
       };
     }
 
-    const slug = `${toSlug(validatedData.name)}-${Date.now().toString(36)}`;
+    const requestedSlug = generateSlug(
+      validatedData.slug ?? validatedData.name,
+    );
+    const slugExists = await prisma.product.findFirst({
+      where: { slug: requestedSlug },
+    });
+    const slug = slugExists ? uniqueSlug(requestedSlug) : requestedSlug;
 
     let category = await prisma.category.findFirst({
       where: { name: validatedData.categoryName },
@@ -38,7 +38,7 @@ export const createProduct = async (data: unknown) => {
       category = await prisma.category.create({
         data: {
           name: validatedData.categoryName,
-          slug: `${toSlug(validatedData.categoryName)}-${Date.now().toString(36)}`,
+          slug: uniqueSlug(generateSlug(validatedData.categoryName)),
         },
       });
     }

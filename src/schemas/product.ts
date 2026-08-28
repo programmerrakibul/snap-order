@@ -1,4 +1,5 @@
 import { DiscountType } from "@/generated/prisma/enums";
+import { SLUG_REGEX } from "@/lib/slug";
 import { z } from "zod";
 
 const money = (min = 0) =>
@@ -11,6 +12,15 @@ const money = (min = 0) =>
 export const productSchema = z.object({
   name: z.string().trim().min(3).max(100),
   description: z.string().trim().min(15).max(500),
+  slug: z
+    .string()
+    .trim()
+    .max(100)
+    .regex(
+      SLUG_REGEX,
+      "Slug must contain only lowercase letters, numbers, and hyphens.",
+    )
+    .optional(),
   brand: z.string().trim().max(80).optional(),
   categoryName: z.string().trim().min(2).max(80),
   tags: z.string().trim().max(250).optional(),

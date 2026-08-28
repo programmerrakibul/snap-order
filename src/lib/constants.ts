@@ -6,6 +6,7 @@ import {
   IconPackageImport,
   IconPackages,
   IconReload,
+  IconCategory,
 } from "@tabler/icons-react";
 
 import { DiscountType, OrderStatus, ProductStatus } from "@/generated/prisma/enums";
@@ -92,6 +93,12 @@ export const sidebarItems: TSideberItem[] = [
     title: "Products",
     href: "/dashboard/products",
     icon: IconPackages,
+  },
+  {
+    title: "Categories",
+    href: "/dashboard/categories",
+    icon: IconCategory,
+    adminOnly: true,
   },
   {
     title: "Re-Stock Products",
