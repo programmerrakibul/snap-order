@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "res.cloudinary.com",
       },
+      {
+        protocol: "https",
+        hostname: "picsum.photos",
+      },
     ],
   },
   cacheComponents: true,
@@ -15,7 +19,6 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "5mb",
     },
   },
-
 };
 
 export default nextConfig;
