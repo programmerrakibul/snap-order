@@ -1,9 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useForm, useWatch, Controller } from "react-hook-form";
+import { useRouter } from "next/navigation";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createProduct } from "@/actions/server/product.action";
+import {
+  createProduct,
+  updateProduct,
+} from "@/actions/server/product.action";
 import {
   productSchema,
   TProductInput,
@@ -22,11 +26,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { IconLoader, IconPlus } from "@tabler/icons-react";
-import { DiscountType } from "@/generated/prisma/enums";
-import { TCategory } from "@/types";
+import { IconLoader, IconPlus, IconTrash } from "@tabler/icons-react";
+import { TCategory, TProduct } from "@/types";
 import SlugInput from "@/components/shared/slug-input";
 import ImageUpload from "@/components/shared/image-upload";
+import VariantFields from "./variant-fields";
 import {
   Select,
   SelectContent,
@@ -37,66 +41,133 @@ import {
 
 interface AddProductFormProps {
   categories: TCategory[];
+  product?: TProduct | null;
 }
 
-const AddProductForm = ({ categories }: AddProductFormProps) => {
+const MAX_VARIANTS = 10;
+const MAX_IMAGES = 6;
+
+const AddProductForm = ({ categories, product }: AddProductFormProps) => {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [categoryMode, setCategoryMode] = useState<"select" | "new">(
-    categories.length > 0 ? "select" : "new",
+  const isEditing = Boolean(product);
+  const [categoryMode, setCategoryMode] = useState<"select" | "new">(() =>
+    product
+      ? "select"
+      : categories.length > 0
+        ? "select"
+        : "new",
   );
 
-  const form = useForm<TProductInput, TProductOutput>({
+  const form = useForm<TProductInput, unknown, TProductOutput>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      name: "",
-      description: "",
-      slug: "",
-      categoryName: "",
-      sku: "",
-      stock: 0,
-      minThreshold: 10,
-      maxThreshold: 100,
-      costPrice: 0,
-      originalPrice: 0,
+      name: product?.name ?? "",
+      description: product?.description ?? "",
+      slug: product?.slug ?? "",
+      brand: product?.brand ?? "",
+      categoryName: product?.category.name ?? "",
+      tags: product?.tags.join(", ") ?? "",
+      imageUrls:
+        product && product.images.length > 0
+          ? product.images.map((image) => ({ url: image.url }))
+          : [{ url: "" }],
+      variants:
+        product && product.variants.length > 0
+          ? product.variants.map((variant) => ({
+              variantId: variant.id,
+              sku: variant.sku,
+              attributeRows: Object.entries(variant.attributes).map(
+                ([key, value]) => ({ key, value }),
+              ),
+              stock: variant.stock,
+              minThreshold: variant.minThreshold,
+              maxThreshold: variant.maxThreshold,
+              costPrice: variant.costPrice,
+              originalPrice: variant.originalPrice,
+              discountType: variant.discountType ?? undefined,
+              discountValue: variant.discountValue ?? undefined,
+              supplierId: "",
+            }))
+          : [
+              {
+                sku: "",
+                attributeRows: [{ key: "", value: "" }],
+                stock: 0,
+                minThreshold: 10,
+                maxThreshold: 100,
+                costPrice: 0,
+                originalPrice: 0,
+                supplierId: "",
+              },
+            ],
     },
     mode: "onBlur",
   });
 
   const watchedName = useWatch({ control: form.control, name: "name" });
   const watchedSlug = useWatch({ control: form.control, name: "slug" });
+  const imageUrlsError =
+    form.formState.errors.imageUrls?.message ||
+    form.formState.errors.imageUrls?.root?.message;
+  const variantsError =
+    form.formState.errors.variants?.message ||
+    form.formState.errors.variants?.root?.message;
 
   useEffect(() => {
+    if (isEditing) return;
+
     const auto = generateSlug(watchedName);
 
     if (auto && !watchedSlug) {
       form.setValue("slug", auto, { shouldValidate: false });
     }
-  }, [watchedName, watchedSlug, form]);
+  }, [watchedName, watchedSlug, isEditing, form]);
+
+  const {
+    fields: variantFields,
+    append: appendVariant,
+    remove: removeVariant,
+  } = useFieldArray({ control: form.control, name: "variants" });
+
+  const {
+    fields: imageFields,
+    append: appendImage,
+    remove: removeImage,
+    update: updateImage,
+  } = useFieldArray({ control: form.control, name: "imageUrls" });
 
   const onSubmit = async (data: TProductInput) => {
     setIsLoading(true);
+
     try {
-      const result = await createProduct(data);
+      const result = product
+        ? await updateProduct(product.id, data)
+        : await createProduct(data);
 
       if (result.success) {
         toast.success(result.message);
 
-        form.reset();
+        if (product) {
+          router.push("/dashboard/products");
+        } else {
+          form.reset();
+        }
       } else {
         toast.error(result.message);
       }
     } catch (error: unknown) {
+      console.error("Error saving product:", error);
       toast.error("Something went wrong!");
-      console.error("Error:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="w-full py-8 md:py-12">
-      <Card className="w-full border-0 shadow-md">
-        <CardContent className="px-4 pb-8 sm:px-6 lg:pb-10">
+    <div>
+      <Card>
+        <CardContent>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-6 sm:space-y-8"
@@ -227,7 +298,10 @@ const AddProductForm = ({ categories }: AddProductFormProps) => {
                                   Select a category
                                 </SelectItem>
                                 {categories.map((category) => (
-                                  <SelectItem key={category.id} value={category.name}>
+                                  <SelectItem
+                                    key={category.id}
+                                    value={category.name}
+                                  >
                                     {category.name}
                                   </SelectItem>
                                 ))}
@@ -306,321 +380,113 @@ const AddProductForm = ({ categories }: AddProductFormProps) => {
                   </Field>
                 )}
               />
+            </FieldGroup>
 
-              <Controller
-                control={form.control}
-                name="imageUrl"
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Product Image</FieldLabel>
-                    <FieldContent>
+            <div className="space-y-4 sm:space-y-6">
+              <div>
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-muted-foreground">
+                    Product Images
+                  </p>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isLoading || imageFields.length >= MAX_IMAGES}
+                    onClick={() => appendImage({ url: "" })}
+                  >
+                    <IconPlus className="h-4 w-4" />
+                    Add image
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {imageFields.map((field, index) => (
+                    <div key={field.id} className="space-y-2">
+                      {index === 0 && (
+                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                          Primary image
+                        </span>
+                      )}
+
                       <ImageUpload
-                        value={field.value}
-                        onChange={field.onChange}
+                        value={field.url}
+                        onChange={(url) => updateImage(index, { url })}
                         folder="products"
                         disabled={isLoading}
                       />
 
-                      {fieldState.error && (
-                        <FieldError>{fieldState.error.message}</FieldError>
+                      {imageFields.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={isLoading}
+                          onClick={() => removeImage(index)}
+                          className="h-8 px-2 text-destructive hover:bg-destructive/10"
+                        >
+                          <IconTrash className="h-4 w-4" />
+                          Remove image
+                        </Button>
                       )}
-                    </FieldContent>
-                  </Field>
-                )}
-              />
-            </FieldGroup>
-
-            <div className="space-y-6 sm:space-y-8">
-              <div>
-                <p className="text-sm font-semibold mb-4 text-muted-foreground">
-                  Initial Variant Details
-                </p>
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <Controller
-                      control={form.control}
-                      name="sku"
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>SKU</FieldLabel>
-                          <FieldContent>
-                            <Input
-                              placeholder="SKU-6-12-CHARS"
-                              {...field}
-                              disabled={isLoading}
-                              aria-invalid={fieldState.invalid}
-                              className="h-10 sm:h-11 text-sm sm:text-base uppercase"
-                            />
-
-                            {fieldState.error && (
-                              <FieldError>{fieldState.error.message}</FieldError>
-                            )}
-                          </FieldContent>
-                        </Field>
-                      )}
-                    />
-
-                    <Controller
-                      control={form.control}
-                      name="attributes"
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Attributes</FieldLabel>
-                          <FieldContent>
-                            <Input
-                              placeholder='{"size":"L","color":"Red"}'
-                              {...field}
-                              disabled={isLoading}
-                              className="h-10 sm:h-11 text-sm sm:text-base font-mono"
-                            />
-
-                            {fieldState.error && (
-                              <FieldError>{fieldState.error.message}</FieldError>
-                            )}
-                          </FieldContent>
-                        </Field>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                    <Controller
-                      control={form.control}
-                      name="stock"
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Stock Quantity</FieldLabel>
-                          <FieldContent>
-                            <Input
-                              type="number"
-                              placeholder="0"
-                              value={field.value as number}
-                              onChange={field.onChange}
-                              onBlur={field.onBlur}
-                              name={field.name}
-                              ref={field.ref}
-                              disabled={isLoading}
-                              aria-invalid={fieldState.invalid}
-                              className="h-10 sm:h-11 text-sm sm:text-base"
-                              min="0"
-                            />
-
-                            {fieldState.error && (
-                              <FieldError>{fieldState.error.message}</FieldError>
-                            )}
-                          </FieldContent>
-                        </Field>
-                      )}
-                    />
-
-                    <Controller
-                      control={form.control}
-                      name="minThreshold"
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Min Threshold</FieldLabel>
-                          <FieldContent>
-                            <Input
-                              type="number"
-                              placeholder="10"
-                              value={field.value as number}
-                              onChange={field.onChange}
-                              onBlur={field.onBlur}
-                              name={field.name}
-                              ref={field.ref}
-                              disabled={isLoading}
-                              aria-invalid={fieldState.invalid}
-                              className="h-10 sm:h-11 text-sm sm:text-base"
-                              min="0"
-                            />
-
-                            {fieldState.error && (
-                              <FieldError>{fieldState.error.message}</FieldError>
-                            )}
-                          </FieldContent>
-                        </Field>
-                      )}
-                    />
-
-                    <Controller
-                      control={form.control}
-                      name="maxThreshold"
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Max Threshold</FieldLabel>
-                          <FieldContent>
-                            <Input
-                              type="number"
-                              placeholder="100"
-                              value={field.value as number}
-                              onChange={field.onChange}
-                              onBlur={field.onBlur}
-                              name={field.name}
-                              ref={field.ref}
-                              disabled={isLoading}
-                              aria-invalid={fieldState.invalid}
-                              className="h-10 sm:h-11 text-sm sm:text-base"
-                              min="1"
-                            />
-
-                            {fieldState.error && (
-                              <FieldError>{fieldState.error.message}</FieldError>
-                            )}
-                          </FieldContent>
-                        </Field>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <Controller
-                      control={form.control}
-                      name="costPrice"
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Cost Price</FieldLabel>
-                          <FieldContent>
-                            <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm sm:text-base">
-                                $
-                              </span>
-                              <Input
-                                type="number"
-                                placeholder="0.00"
-                                value={field.value as number}
-                                onChange={field.onChange}
-                                onBlur={field.onBlur}
-                                name={field.name}
-                                ref={field.ref}
-                                disabled={isLoading}
-                                aria-invalid={fieldState.invalid}
-                                className="h-10 sm:h-11 pl-7 text-sm sm:text-base"
-                                step="0.01"
-                                min="0"
-                              />
-                            </div>
-
-                            {fieldState.error && (
-                              <FieldError>{fieldState.error.message}</FieldError>
-                            )}
-                          </FieldContent>
-                        </Field>
-                      )}
-                    />
-
-                    <Controller
-                      control={form.control}
-                      name="originalPrice"
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Selling Price</FieldLabel>
-                          <FieldContent>
-                            <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm sm:text-base">
-                                $
-                              </span>
-                              <Input
-                                type="number"
-                                placeholder="0.00"
-                                value={field.value as number}
-                                onChange={field.onChange}
-                                onBlur={field.onBlur}
-                                name={field.name}
-                                ref={field.ref}
-                                disabled={isLoading}
-                                aria-invalid={fieldState.invalid}
-                                className="h-10 sm:h-11 pl-7 text-sm sm:text-base"
-                                step="0.01"
-                                min="0"
-                              />
-                            </div>
-
-                            {fieldState.error && (
-                              <FieldError>{fieldState.error.message}</FieldError>
-                            )}
-                          </FieldContent>
-                        </Field>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <Controller
-                      control={form.control}
-                      name="discountType"
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Discount Type</FieldLabel>
-                          <FieldContent>
-                            <Select
-                              value={field.value ?? "NONE"}
-                              onValueChange={(value) =>
-                                field.onChange(
-                                  value === "NONE"
-                                    ? undefined
-                                    : (value as DiscountType),
-                                )
-                              }
-                              disabled={isLoading}
-                            >
-                              <SelectTrigger className="h-10 sm:h-11 w-full text-sm sm:text-base">
-                                <SelectValue placeholder="No discount" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="NONE">
-                                  No discount
-                                </SelectItem>
-                                <SelectItem value={DiscountType.PERCENTAGE}>
-                                  Percentage (%)
-                                </SelectItem>
-                                <SelectItem value={DiscountType.FIXED}>
-                                  Fixed amount ($)
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-
-                            {fieldState.error && (
-                              <FieldError>{fieldState.error.message}</FieldError>
-                            )}
-                          </FieldContent>
-                        </Field>
-                      )}
-                    />
-
-                    <Controller
-                      control={form.control}
-                      name="discountValue"
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Discount Value</FieldLabel>
-                          <FieldContent>
-                            <Input
-                              type="number"
-                              placeholder="0.00"
-                              value={
-                                field.value === undefined || field.value === null
-                                  ? ""
-                                  : (field.value as number)
-                              }
-                              onChange={field.onChange}
-                              onBlur={field.onBlur}
-                              name={field.name}
-                              ref={field.ref}
-                              disabled={isLoading}
-                              className="h-10 sm:h-11 text-sm sm:text-base"
-                              step="0.01"
-                              min="0"
-                            />
-
-                            {fieldState.error && (
-                              <FieldError>{fieldState.error.message}</FieldError>
-                            )}
-                          </FieldContent>
-                        </Field>
-                      )}
-                    />
-                  </div>
+                    </div>
+                  ))}
                 </div>
+
+                {imageUrlsError && <FieldError>{imageUrlsError}</FieldError>}
+
+                <p className="mt-2 text-xs text-muted-foreground">
+                  At least one image is required. The first image is used as the
+                  primary one.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4 sm:space-y-6">
+              <div>
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-muted-foreground">
+                    Variants
+                  </p>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isLoading || variantFields.length >= MAX_VARIANTS}
+                    onClick={() =>
+                      appendVariant({
+                        sku: "",
+                        attributeRows: [{ key: "", value: "" }],
+                        stock: 0,
+                        minThreshold: 10,
+                        maxThreshold: 100,
+                        costPrice: 0,
+                        originalPrice: 0,
+                        supplierId: "",
+                      })
+                    }
+                  >
+                    <IconPlus className="h-4 w-4" />
+                    Add variant
+                  </Button>
+                </div>
+
+                <div className="space-y-4 sm:space-y-6">
+                  {variantFields.map((field, index) => (
+                    <VariantFields
+                      key={field.id}
+                      control={form.control}
+                      index={index}
+                      isLoading={isLoading}
+                      canRemove={variantFields.length > 1}
+                      onRemove={() => removeVariant(index)}
+                    />
+                  ))}
+                </div>
+
+                {variantsError && <FieldError>{variantsError}</FieldError>}
               </div>
             </div>
 
@@ -629,8 +495,10 @@ const AddProductForm = ({ categories }: AddProductFormProps) => {
                 {isLoading ? (
                   <>
                     <IconLoader className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
+                    {isEditing ? "Updating..." : "Creating..."}
                   </>
+                ) : isEditing ? (
+                  "Update Product"
                 ) : (
                   "Create Product"
                 )}

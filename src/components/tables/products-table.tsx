@@ -1,17 +1,19 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import OrderProductModal from "@/components/modals/order-product-modal";
+import ProductDetailModal from "@/components/modals/product-detail-modal";
 import {
   DataTable,
   type DataTableColumn,
 } from "@/components/shared/data-table";
-import { TProduct } from "@/types/product.interface";
-import { IconEye, IconShoppingCart } from "@tabler/icons-react";
-import OrderProductModal from "@/components/modals/order-product-modal";
-import ProductDetailModal from "@/components/modals/product-detail-modal";
-import useUserData from "@/hooks/useUserData";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Role } from "@/generated/prisma/enums";
+import useUserData from "@/hooks/useUserData";
+import { TProduct } from "@/types/product.interface";
+import { IconEye, IconPencil, IconShoppingCart } from "@tabler/icons-react";
+import Link from "next/link";
+import DeleteProductButton from "./delete-product-button";
 
 interface ProductsTableProps {
   products: TProduct[];
@@ -90,6 +92,26 @@ export default function ProductsTable({ products }: ProductsTableProps) {
               </Button>
             }
           />
+
+          {user?.role === Role.ADMIN && (
+            <>
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 hover:bg-primary/10"
+              >
+                <Link
+                  href={`/dashboard/edit-product/${row.id}`}
+                  title="Edit Product"
+                >
+                  <IconPencil className="h-4 w-4" />
+                </Link>
+              </Button>
+              
+              <DeleteProductButton product={row} />
+            </>
+          )}
 
           {user?.role === Role.USER && (
             <OrderProductModal

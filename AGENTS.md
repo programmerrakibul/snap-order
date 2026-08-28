@@ -34,12 +34,14 @@ prisma/
 ├── schema.prisma               # generator (prisma-client → src/generated/prisma) + datasource
 ├── enums/                      # Role, OrderStatus, RestockStatus, ProductStatus, DiscountType
 ├── models/                     # User, Category, Product, ProductImage, ProductVariant, Order, ...
+├── seed.ts                     # Idempotent seed — 10 categories + 20 products (upserts)
 └── migrations/                 # SQL migration history
 src/
 ├── proxy.ts                     # Next.js middleware — auth guard + token refresh
 ├── actions/server/              # Server Actions (data mutations)
 │   ├── user.action.ts           # Auth, profile, verification, password reset
-│   ├── product.action.ts        # Product CRUD (create/read only)
+│   ├── product.action.ts        # Product CRUD + variants + images (edit/manage)
+│   ├── category.action.ts       # Category CRUD + slug handling
 │   ├── order.action.ts          # Order CRUD + status management
 │   ├── restock.action.ts        # Restock approve/cancel
 │   ├── overview.action.ts       # Dashboard stats
@@ -55,7 +57,9 @@ src/
 │   │   ├── layout.tsx           # Sidebar + SiteHeader + UserProvider
 │   │   ├── _component/          # admin-overview, user-overview
 │   │   ├── add-products/        # Admin only
+│   │   ├── edit-product/[id]/   # Admin only — edit product + manage variants
 │   │   ├── products/            # Product listing
+│   │   ├── categories/          # Admin only — category CRUD
 │   │   ├── orders/              # Order listing
 │   │   ├── customers/           # Admin only
 │   │   ├── profile/             # User profile
@@ -64,12 +68,12 @@ src/
 ├── components/
 │   ├── cards/                   # MetricCard
 │   ├── emails/                  # React Email templates
-│   ├── forms/                   # Client forms (signin, signup, add-product, etc.)
+│   ├── forms/                   # Client forms (signin, signup, add-product, variant-fields, etc.)
 │   ├── modals/                  # Dialog components (OTP, order, detail, etc.)
 │   ├── restock/                 # Restock request detail
 │   ├── home/                    # Homepage sections (hero, features, workflow, roles)
-│   ├── shared/                  # Container, Navbar, Footer, DataTable, Sidebar, etc.
-│   ├── tables/                  # Products, Orders, Customers, Restocks tables
+│   ├── shared/                  # Container, Navbar, Footer, DataTable, Sidebar, SlugInput, ImageUpload
+│   ├── tables/                  # Products, Orders, Customers, Categories, Restocks tables
 │   └── ui/                      # 25 shadcn/ui primitives
 ├── hooks/                       # useUserData, use-mobile
 ├── lib/                         # Core utilities
@@ -78,13 +82,14 @@ src/
 │   ├── password.ts              # bcrypt hash/compare
 │   ├── otp.ts                   # 6-digit OTP with bcrypt hashing
 │   ├── email.tsx                # Nodemailer transporter + send
+│   ├── slug.ts                  # generateSlug()/uniqueSlug()/SLUG_REGEX
 │   ├── constants.ts             # Sidebar items, status config, token ages
 │   ├── constants-server.ts      # Protected paths, cookie options (server-only)
 │   ├── env.ts                   # Zod-validated env accessor
 │   └── error.ts                 # Error response formatter
 ├── providers/                   # theme-provider, user-provider
-├── schemas/                     # Zod schemas (env, user, product, order)
-└── types/                       # TypeScript interfaces (user, order, product, restock, token)
+├── schemas/                     # Zod schemas (env, user, product, category, order)
+└── types/                       # TypeScript interfaces (user, order, product, category, restock, token)
 ```
 
 ---
@@ -137,6 +142,21 @@ dashboard).
 ---
 
 ## Key Flows
+
+### Products & Variants
+
+- Admin creates products via `/dashboard/add-products` and edits/extends them via
+  `/dashboard/edit-product/[id]` (pencil action in the products table)
+- A product supports **multiple variants** — each with its own unique SKU, stock,
+  min/max thresholds, cost/selling prices, discount, and structured attribute
+  key/value rows (serialized to the `attributes` Json column)
+- **Images**: multiple per product (min 1, first is primary); uploaded via
+  Cloudinary `ImageUpload` with instant preview, replaced wholesale on edit
+- Removed variants are **deactivated** (`isActive = false`), never hard-deleted,
+  so orders and restock history remain intact
+- Slugs are optional in forms and auto-generated from the name via
+  `generateSlug()` (fallback `uniqueSlug()` on collision)
+- SKU conflicts are pre-checked against the DB for friendly errors
 
 ### Orders
 
@@ -196,6 +216,7 @@ npm run build        # Production build
 npm run start        # Start production server
 npm run lint         # Run ESLint
 npm run clean        # Clean build artifacts
+npm run db:seed      # Seed 10 categories + 20 products (idempotent)
 npx prisma migrate deploy  # Apply migrations
 npx prisma generate        # Regenerate Prisma client
 ```
@@ -209,6 +230,8 @@ npx prisma generate        # Regenerate Prisma client
 - All forms use react-hook-form with Zod resolver
 - Path alias `@/` maps to `src/`
 - Mutations call `revalidatePath()` to invalidate Next.js caches
+- Slugs rely on `generateSlug()`/`uniqueSlug()` (never hand-written) and are
+  validated by `SLUG_REGEX`
 - Always prefer editing existing files over creating new ones
 - Match existing patterns (import style, component structure, naming
   conventions)
