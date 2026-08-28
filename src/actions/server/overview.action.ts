@@ -1,6 +1,6 @@
 "use server";
 
-import { OrderStatus, RestockStatus, Role } from "@/generated/prisma/enums";
+import { OrderStatus, ProductStatus, RestockStatus, Role } from "@/generated/prisma/enums";
 import prisma from "@/lib/prisma";
 import { isAuthenticated } from "./isAuthenticated";
 
@@ -32,9 +32,8 @@ export const getAdminOverviewData = async () => {
   const [
     totalUsers,
     totalCustomers,
-    totalProducts,
-    activeProducts,
-    lowStockProducts,
+    activeVariants,
+    lowStockVariants,
     pendingRestocks,
     orders,
     recentOrders,
@@ -43,13 +42,16 @@ export const getAdminOverviewData = async () => {
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { role: Role.USER } }),
-    prisma.product.count(),
-    prisma.product.count({ where: { isActive: true } }),
-    prisma.product.count({
+    prisma.productVariant.count({
+      where: {
+        isActive: true,
+      },
+    }),
+    prisma.productVariant.count({
       where: {
         isActive: true,
         stock: {
-          lte: prisma.product.fields.minThreshold,
+          lte: prisma.productVariant.fields.minThreshold,
         },
       },
     }),
@@ -93,9 +95,13 @@ export const getAdminOverviewData = async () => {
       include: {
         items: {
           include: {
-            product: {
+            productVariant: {
               select: {
-                name: true,
+                product: {
+                  select: {
+                    name: true,
+                  },
+                },
               },
             },
           },
@@ -103,7 +109,7 @@ export const getAdminOverviewData = async () => {
       },
     }),
     prisma.orderItem.groupBy({
-      by: ["productId"],
+      by: ["productVariantId"],
       _sum: {
         quantity: true,
       },
@@ -116,18 +122,22 @@ export const getAdminOverviewData = async () => {
     }),
   ]);
 
-  const productIds = topItems.map((item) => item.productId);
-  const products = productIds.length
-    ? await prisma.product.findMany({
+  const variantIds = topItems.map((item) => item.productVariantId);
+  const variants = variantIds.length
+    ? await prisma.productVariant.findMany({
         where: {
           id: {
-            in: productIds,
+            in: variantIds,
           },
         },
         select: {
           id: true,
-          name: true,
           stock: true,
+          product: {
+            select: {
+              name: true,
+            },
+          },
         },
       })
     : [];
@@ -136,8 +146,6 @@ export const getAdminOverviewData = async () => {
     status,
     count: orders.filter((order) => order.status === status).length,
   }));
-
-  console.log(orders);
 
   const revenueByDay = days.map((date) => {
     const key = toDayKey(date);
@@ -171,9 +179,9 @@ export const getAdminOverviewData = async () => {
       totalOrders,
       totalUsers,
       totalCustomers,
-      totalProducts,
-      activeProducts,
-      lowStockProducts,
+      totalProducts: activeVariants,
+      activeProducts: activeVariants,
+      lowStockProducts: lowStockVariants,
       pendingRestocks,
       fulfillmentRate: totalOrders
         ? Math.round((fulfilledOrders / totalOrders) * 100)
@@ -182,12 +190,14 @@ export const getAdminOverviewData = async () => {
     revenueByDay,
     statusCounts,
     topProducts: topItems.map((item) => {
-      const product = products.find((entry) => entry.id === item.productId);
+      const variant = variants.find(
+        (entry) => entry.id === item.productVariantId,
+      );
 
       return {
-        id: item.productId,
-        name: product?.name ?? "Unknown product",
-        stock: product?.stock ?? 0,
+        id: item.productVariantId,
+        name: variant?.product.name ?? "Unknown product",
+        stock: variant?.stock ?? 0,
         sold: item._sum.quantity ?? 0,
       };
     }),
@@ -208,7 +218,7 @@ export const getAdminOverviewData = async () => {
       quantity: request.items.reduce((total, item) => total + item.quantity, 0),
       products: request.items
         .slice(0, 2)
-        .map((item) => item.product.name)
+        .map((item) => item.productVariant.product.name)
         .join(", "),
     })),
   };
@@ -222,7 +232,7 @@ export const getUserOverviewData = async () => {
   const days = getLastDays(7);
   const fromDate = days[0];
 
-  const [orders, recentOrders, availableProducts, recentProducts] =
+  const [orders, recentOrders, availableVariants, recentVariants] =
     await Promise.all([
       prisma.order.findMany({
         where: {
@@ -248,28 +258,38 @@ export const getUserOverviewData = async () => {
         include: {
           items: {
             include: {
-              product: {
+              productVariant: {
                 select: {
-                  name: true,
+                  product: {
+                    select: {
+                      name: true,
+                    },
+                  },
                 },
               },
             },
           },
         },
       }),
-      prisma.product.count({
+      prisma.productVariant.count({
         where: {
           isActive: true,
           stock: {
             gt: 0,
           },
+          product: {
+            status: ProductStatus.ACTIVE,
+          },
         },
       }),
-      prisma.product.findMany({
+      prisma.productVariant.findMany({
         where: {
           isActive: true,
           stock: {
             gt: 0,
+          },
+          product: {
+            status: ProductStatus.ACTIVE,
           },
         },
         take: 5,
@@ -278,10 +298,14 @@ export const getUserOverviewData = async () => {
         },
         select: {
           id: true,
-          name: true,
-          price: true,
+          originalPrice: true,
           stock: true,
           createdAt: true,
+          product: {
+            select: {
+              name: true,
+            },
+          },
         },
       }),
     ]);
@@ -324,7 +348,7 @@ export const getUserOverviewData = async () => {
       deliveredOrders: orders.filter(
         (order) => order.status === OrderStatus.DELIVERED,
       ).length,
-      availableProducts,
+      availableProducts: availableVariants,
     },
     spendingByDay,
     statusCounts,
@@ -335,16 +359,16 @@ export const getUserOverviewData = async () => {
       totalAmount: order.totalAmount.toNumber(),
       createdAt: order.createdAt.toISOString(),
       items: order.items.map((item) => ({
-        productName: item.product.name,
+        productName: item.productVariant.product.name,
         quantity: item.quantity,
       })),
     })),
-    recentProducts: recentProducts.map((product) => ({
-      id: product.id,
-      name: product.name,
-      price: product.price.toNumber(),
-      stock: product.stock,
-      createdAt: product.createdAt.toISOString(),
+    recentProducts: recentVariants.map((variant) => ({
+      id: variant.id,
+      name: variant.product.name,
+      price: variant.originalPrice.toNumber(),
+      stock: variant.stock,
+      createdAt: variant.createdAt.toISOString(),
     })),
   };
 };

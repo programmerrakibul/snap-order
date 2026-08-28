@@ -6,9 +6,10 @@ import {
   IconPackageImport,
   IconPackages,
   IconReload,
+  IconCategory,
 } from "@tabler/icons-react";
 
-import { OrderStatus } from "@/generated/prisma/enums";
+import { DiscountType, OrderStatus, ProductStatus } from "@/generated/prisma/enums";
 import { TSideberItem } from "@/types";
 
 export const ACCESS_TOKEN_MAX_AGE = 15 * 60;
@@ -40,6 +41,42 @@ export const STATUS_CONFIG: Record<
   },
 };
 
+export const PRODUCT_STATUS_CONFIG: Record<
+  ProductStatus,
+  { color: string; label: string }
+> = {
+  DRAFT: {
+    color: "bg-slate-500/10 text-slate-700 border-slate-200",
+    label: "Draft",
+  },
+  ACTIVE: {
+    color: "bg-green-500/10 text-green-700 border-green-200",
+    label: "Active",
+  },
+  ARCHIVED: {
+    color: "bg-zinc-500/10 text-zinc-700 border-zinc-200",
+    label: "Archived",
+  },
+  OUT_OF_STOCK: {
+    color: "bg-red-500/10 text-red-700 border-red-200",
+    label: "Out of Stock",
+  },
+};
+
+export const DISCOUNT_TYPE_CONFIG: Record<
+  DiscountType,
+  { color: string; label: string }
+> = {
+  PERCENTAGE: {
+    color: "bg-indigo-500/10 text-indigo-700 border-indigo-200",
+    label: "%",
+  },
+  FIXED: {
+    color: "bg-cyan-500/10 text-cyan-700 border-cyan-200",
+    label: "$",
+  },
+};
+
 export const sidebarItems: TSideberItem[] = [
   {
     title: "Overview",
@@ -56,6 +93,12 @@ export const sidebarItems: TSideberItem[] = [
     title: "Products",
     href: "/dashboard/products",
     icon: IconPackages,
+  },
+  {
+    title: "Categories",
+    href: "/dashboard/categories",
+    icon: IconCategory,
+    adminOnly: true,
   },
   {
     title: "Re-Stock Products",

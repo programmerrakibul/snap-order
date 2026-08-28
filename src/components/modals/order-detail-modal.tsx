@@ -155,7 +155,7 @@ export default function OrderDetailModal({
                     >
                       <div className="flex-1">
                         <p className="font-medium text-sm">
-                          Product ID: {item.productId}
+                          {item.productName} ({item.variantSku})
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
                           Qty: {item.quantity} × ${item.unitPrice.toFixed(2)}

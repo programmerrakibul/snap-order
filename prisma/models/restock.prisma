@@ -1,0 +1,17 @@
+model RestockRequest {
+  id          String        @id @default(cuid())
+  status      RestockStatus @default(PENDING)
+  stockedById String?
+
+  items     RestockRequestItem[]
+  stockedBy User?                @relation(fields: [stockedById], references: [id])
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+  approvedAt  DateTime?
+  cancelledAt DateTime?
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([stockedById])
+}

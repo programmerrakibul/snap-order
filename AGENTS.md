@@ -30,7 +30,11 @@ UI levels.
 ## Folder Structure
 
 ```
-prisma/                          # Schema + migrations
+prisma/
+├── schema.prisma               # generator (prisma-client → src/generated/prisma) + datasource
+├── enums/                      # Role, OrderStatus, RestockStatus, ProductStatus, DiscountType
+├── models/                     # User, Category, Product, ProductImage, ProductVariant, Order, ...
+└── migrations/                 # SQL migration history
 src/
 ├── proxy.ts                     # Next.js middleware — auth guard + token refresh
 ├── actions/server/              # Server Actions (data mutations)
@@ -87,14 +91,17 @@ src/
 
 ## Database Models
 
-| Model                  | Key Fields                                                                                                                       | Relations                                                    |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| **User**               | id, email, password, role (USER/ADMIN), isVerified, isActive, verificationCode, resetPasswordCode, lastLoggedIn                  | orders[], products[](supplier), restockRequests[](stockedBy) |
-| **Product**            | id, name(unique), description, price(Decimal), stock, minThreshold(10), maxThreshold(100), supplierId, isActive, lastRestockedAt | orderItems[], restockItems[], supplier(User)                 |
-| **Order**              | id, orderNumber(unique), status(PENDING/CONFIRMED/SHIPPED/DELIVERED/CANCELLED), totalAmount(Decimal), userId, shippingAddress    | user, items[](OrderItem, cascade)                            |
-| **OrderItem**          | id, orderId, productId, quantity, unitPrice(Decimal)                                                                             | order(cascade), product                                      |
-| **RestockRequest**     | id, status(PENDING/APPROVED/CANCELLED), stockedById, approvedAt, cancelledAt                                                     | stockedBy(User), items[](RestockRequestItem, cascade)        |
-| **RestockRequestItem** | id, restockRequestId, productId, quantity                                                                                        | product, restockRequest(cascade)                             |
+| Model                  | Key Fields                                                                                                                                                                | Relations                                                                                |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **User**               | id, email, password, role (USER/ADMIN), isVerified, isActive, verification/reset OTP fields, lastLoggedIn                                                                 | orders[], productVariants[](supplier), restockRequests[](stockedBy)                      |
+| **Category**           | id, name, slug(unique), image                                                                                                                                             | products[]                                                                               |
+| **Product**            | id, name, description, brand, tags(String[]), slug(unique), status(DRAFT/ACTIVE/ARCHIVED/OUT_OF_STOCK), isFeatured, categoryId                                            | category, images[](ProductImage), variants[](ProductVariant)                             |
+| **ProductImage**       | id, url, altText, isPrimary, productId (cascade DELETE)                                                                                                                   | product                                                                                  |
+| **ProductVariant**     | id, sku(unique, Char(12)), attributes(Json), stock, minThreshold(10), maxThreshold(100), costPrice, originalPrice, discountAmount/Type/Value, supplierId, lastRestockedAt | product(cascade), items[](OrderItem), restockItems[](RestockRequestItem), supplier(User) |
+| **Order**              | id, orderNumber(unique), status(PENDING/CONFIRMED/SHIPPED/DELIVERED/CANCELLED), totalAmount(Decimal), userId, shippingAddress                                             | user, items[](OrderItem, cascade)                                                        |
+| **OrderItem**          | id, orderId, productVariantId, quantity, unitPrice(Decimal)                                                                                                               | order(cascade), productVariant                                                           |
+| **RestockRequest**     | id, status(PENDING/APPROVED/CANCELLED), stockedById, approvedAt, cancelledAt                                                                                              | stockedBy(User), items[](RestockRequestItem, cascade)                                    |
+| **RestockRequestItem** | id, restockRequestId, productVariantId, quantity                                                                                                                          | productVariant, restockRequest(cascade)                                                  |
 
 ---
 
@@ -117,12 +124,13 @@ src/
 
 ## Homepage
 
-The public route `/` renders a marketing landing page (no redirect to dashboard).
+The public route `/` renders a marketing landing page (no redirect to
+dashboard).
 
 - **Layout**: `Navbar` → `Hero` → Features → Workflow → Roles → `Footer`
-- **Auth-aware CTAs**: `isAuthenticated()` (JWT from httpOnly cookies) drives Sign In /
-  Dashboard links in the navbar and hero, wrapped in `Suspense` for Partial
-  Prerendering with Cache Components
+- **Auth-aware CTAs**: `isAuthenticated()` (JWT from httpOnly cookies) drives
+  Sign In / Dashboard links in the navbar and hero, wrapped in `Suspense` for
+  Partial Prerendering with Cache Components
 - **Components**: `components/shared/navbar.tsx`, `footer.tsx`; section blocks
   under `components/home/`
 
@@ -140,10 +148,10 @@ The public route `/` renders a marketing landing page (no redirect to dashboard)
 ### Restock
 
 - **Automated**: Vercel cron (`0 0 * * *`) hits `/api/restock-check` — creates
-  `RestockRequest` for products where `stock <= minThreshold`
+  `RestockRequest` for variants where `stock <= minThreshold` (product `ACTIVE`)
 - **Manual Approval**: Admin views pending requests, can adjust quantities, then
-  approves (increments stock, sets `lastRestockedAt`) or cancels
-- Products already in a pending restock request are excluded from new
+  approves (increments variant stock, sets `lastRestockedAt`) or cancels
+- Variants already in a pending restock request are excluded from new
   auto-generated requests
 
 ### Email

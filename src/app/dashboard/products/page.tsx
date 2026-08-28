@@ -1,11 +1,11 @@
 import { getAllProducts } from "@/actions/server/product.action";
 import Container from "@/components/shared/container";
 import ProductsTable from "@/components/tables/products-table";
+import { PageHeader } from "@/components/ui/page-header";
 import { TProduct } from "@/types/product.interface";
 import { Metadata } from "next";
 import { Suspense } from "react";
 import ProductsLoading from "./loading";
-import { PageHeader } from "@/components/ui/page-header";
 
 export const metadata: Metadata = {
   title: "Products",

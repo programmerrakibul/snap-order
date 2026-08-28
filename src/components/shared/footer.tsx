@@ -1,10 +1,16 @@
-"use client";
-
 import Container from "@/components/shared/container";
 import Logo from "@/components/ui/logo";
+import { cacheLife } from "next/cache";
 
-export default function Footer() {
-  const year = new Date().getFullYear();
+const timestamp = async () => {
+  "use cache";
+  cacheLife("max");
+
+  return new Date();
+};
+
+export default async function Footer() {
+  const year = (await timestamp()).getFullYear();
 
   return (
     <footer className="border-t border-border/60 py-6">

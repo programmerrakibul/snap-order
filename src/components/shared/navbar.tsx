@@ -1,27 +1,20 @@
-import { isAuthenticated } from "@/actions/server/isAuthenticated";
+"use client";
+
 import Container from "@/components/shared/container";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/ui/logo";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import useUserData from "@/hooks/useUserData";
 import Link from "next/link";
-import { Suspense } from "react";
 
-async function AuthNavAction() {
-  const user = await isAuthenticated();
+function AuthNavAction() {
+  const { user } = useUserData();
 
   return (
     <Button asChild size="sm">
       <Link href={user ? "/dashboard" : "/auth/signin"}>
         {user ? "Dashboard" : "Sign In"}
       </Link>
-    </Button>
-  );
-}
-
-function AuthNavActionFallback() {
-  return (
-    <Button asChild size="sm">
-      <Link href="/auth/signin">Sign In</Link>
     </Button>
   );
 }
@@ -33,9 +26,7 @@ export default function Navbar() {
         <Logo />
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Suspense fallback={<AuthNavActionFallback />}>
-            <AuthNavAction />
-          </Suspense>
+          <AuthNavAction />
         </div>
       </Container>
     </header>
