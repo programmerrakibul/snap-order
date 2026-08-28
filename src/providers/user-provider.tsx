@@ -35,7 +35,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    (async () => {
+    const fetchUser = async () => {
       try {
         const userData = await getUserData();
         setUser(userData);
@@ -45,7 +45,9 @@ export const UserProvider = ({ children }: UserProviderProps) => {
       } finally {
         setIsLoading(false);
       }
-    })();
+    };
+
+    fetchUser();
   }, []);
 
   const authenticated = useMemo(() => !!user, [user]);
