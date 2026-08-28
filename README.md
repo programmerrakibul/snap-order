@@ -56,7 +56,11 @@ controls.
 - **Role-Based Access**: USER and ADMIN roles with middleware-enforced route
   protection
 - **Dashboard**: Role-specific overviews with key metrics
-- **Product Management**: Create products with stock and pricing
+- **Product Management**: Create and edit products with auto-generated slugs,
+  multiple Cloudinary images (min 1, first is primary), and multiple variants —
+  each with its own SKU, stock, thresholds, prices, and structured attributes
+- **Category Management**: Admin CRUD for categories with auto-generated slugs
+  and image upload
 - **Order Processing**: Place orders with atomic stock deduction, status
   tracking (PENDING → CONFIRMED → SHIPPED → DELIVERED)
 - **Automated Restock**: Daily cron checks stock thresholds, creates pending
@@ -96,6 +100,9 @@ npx prisma migrate deploy
 
 # Generate Prisma client
 npx prisma generate
+
+# Seed demo data (10 categories, 20 products)
+npm run db:seed
 
 # Start development server
 npm run dev
@@ -138,30 +145,32 @@ sign in to access the dashboard.
 | `npm run start` | Start production server               |
 | `npm run lint`  | Run ESLint                            |
 | `npm run clean` | Remove build artifacts                |
+| `npm run db:seed` | Seed demo data (categories + products) |
 
 ---
 
 ## Project Structure
 
 ```
-prisma/                         # Database schema and migrations
+prisma/                         # Database schema, migrations, and seed (10 categories, 20 products)
 src/
 ├── proxy.ts                    # Middleware — auth guard + token refresh
-├── actions/server/             # Server Actions (auth, products, orders, restock)
+├── actions/server/             # Server Actions (auth, products, categories, orders, restock)
 ├── app/                        # Next.js App Router pages
 │   ├── page.tsx                # Public marketing homepage
 │   ├── auth/                   # Login, registration, forgot password
-│   ├── dashboard/              # Protected pages (overview, products, orders, etc.)
+│   ├── dashboard/              # Protected pages (overview, products, orders, categories, etc.)
+│   │   └── edit-product/[id]/  # Admin-only product & variant editor
 │   └── api/restock-check/      # Cron endpoint for automated restock
 ├── components/
 │   ├── home/                   # Homepage sections (hero, features, workflow, roles)
-│   ├── shared/                 # Navbar, footer, container, dashboard layout
+│   ├── shared/                 # Navbar, footer, container, data table, slug input, image upload
 │   ├── emails/                 # React Email templates
-│   ├── forms/                  # Client form components
+│   ├── forms/                  # Client form components (incl. variant-fields)
 │   ├── modals/                 # Dialog/modal components
 │   ├── tables/                 # Data table components
 │   └── ui/                     # shadcn/ui primitives
-├── lib/                        # Core utilities (Prisma, JWT, email, OTP, validation)
+├── lib/                        # Core utilities (Prisma, JWT, email, OTP, slug, validation)
 ├── providers/                  # React context providers
 ├── schemas/                    # Zod validation schemas
 └── types/                      # TypeScript type definitions
@@ -176,8 +185,9 @@ Nine models: **User**, **Category**, **Product**, **ProductImage**,
 **RestockRequestItem** — with full relational mapping for inventory (products
 with variants and categories), orders, and restock workflows. Pricing and stock
 live on product **variants**; orders and restock requests reference variants
-directly. The datamodel is split across `prisma/enums/` and `prisma/models/`.
-See `prisma/` for details.
+directly. Removed variants are soft-deactivated (`isActive = false`) so order and
+restock history stays intact. The datamodel is split across `prisma/enums/` and
+`prisma/models/`. See `prisma/` for details.
 
 ---
 

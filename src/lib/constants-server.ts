@@ -12,6 +12,7 @@ export const PROTECTED_PATHS = {
     "/dashboard/restock-products",
     "/dashboard/customers",
     "/dashboard/categories",
+    "/dashboard/edit-product",
   ],
 } 
 
