@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { RestockStatus, Role } from "@/generated/prisma/enums";
 import prisma from "@/lib/prisma";
 import { TRestockRequest } from "@/types";
@@ -17,7 +18,20 @@ export const getRestockRequestItems = async (): Promise<TRestockRequest[]> => {
       include: {
         items: {
           include: {
-            product: true,
+            productVariant: {
+              select: {
+                id: true,
+                sku: true,
+                stock: true,
+                minThreshold: true,
+                maxThreshold: true,
+                product: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
           },
         },
         stockedBy: {
@@ -40,11 +54,12 @@ export const getRestockRequestItems = async (): Promise<TRestockRequest[]> => {
         ...item,
         createdAt: item.createdAt.toISOString(),
         updatedAt: item.updatedAt.toISOString(),
-        product: {
-          name: item.product.name,
-          stock: item.product.stock,
-          minThreshold: item.product.minThreshold,
-          maxThreshold: item.product.maxThreshold,
+        productVariant: {
+          sku: item.productVariant.sku,
+          stock: item.productVariant.stock,
+          minThreshold: item.productVariant.minThreshold,
+          maxThreshold: item.productVariant.maxThreshold,
+          productName: item.productVariant.product.name,
         },
       })),
     }));
@@ -70,7 +85,20 @@ export const getRestockRequestById = async (
       include: {
         items: {
           include: {
-            product: true,
+            productVariant: {
+              select: {
+                id: true,
+                sku: true,
+                stock: true,
+                minThreshold: true,
+                maxThreshold: true,
+                product: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
           },
         },
         stockedBy: {
@@ -95,11 +123,12 @@ export const getRestockRequestById = async (
         ...item,
         createdAt: item.createdAt.toISOString(),
         updatedAt: item.updatedAt.toISOString(),
-        product: {
-          name: item.product.name,
-          stock: item.product.stock,
-          minThreshold: item.product.minThreshold,
-          maxThreshold: item.product.maxThreshold,
+        productVariant: {
+          sku: item.productVariant.sku,
+          stock: item.productVariant.stock,
+          minThreshold: item.productVariant.minThreshold,
+          maxThreshold: item.productVariant.maxThreshold,
+          productName: item.productVariant.product.name,
         },
       })),
     };
@@ -115,7 +144,7 @@ export const approveRestockRequest = async ({
 }: {
   requestId: string;
   items: {
-    productId: string;
+    productVariantId: string;
     quantity: number;
   }[];
 }) => {
@@ -129,14 +158,15 @@ export const approveRestockRequest = async ({
       };
     }
 
-    const updateProductStockPromises = items.map(({ productId, quantity }) =>
-      prisma.product.update({
-        where: { id: productId },
-        data: { stock: { increment: quantity }, lastRestockedAt: new Date() },
-      }),
+    const updateVariantStockPromises = items.map(
+      ({ productVariantId, quantity }) =>
+        prisma.productVariant.update({
+          where: { id: productVariantId },
+          data: { stock: { increment: quantity }, lastRestockedAt: new Date() },
+        }),
     );
 
-    await Promise.all(updateProductStockPromises);
+    await Promise.all(updateVariantStockPromises);
 
     const today = new Date();
     await prisma.restockRequest.update({
@@ -147,6 +177,10 @@ export const approveRestockRequest = async ({
         stockedById: user.id,
       },
     });
+
+    revalidatePath("/dashboard/products");
+    revalidatePath("/dashboard/restock-products");
+    revalidatePath("/dashboard");
 
     return {
       success: true,
@@ -180,6 +214,8 @@ export const cancelRestockRequest = async (requestId: string) => {
         cancelledAt: new Date(),
       },
     });
+
+    revalidatePath("/dashboard/restock-products");
 
     return {
       success: true,

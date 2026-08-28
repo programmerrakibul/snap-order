@@ -12,8 +12,9 @@
 
 Snap Order is a full-stack web application that streamlines inventory tracking,
 order processing, and restock management for small to medium businesses. Built
-with a modern Next.js stack, it provides a public marketing homepage and separate
-dashboards for administrators and regular users with appropriate access controls.
+with a modern Next.js stack, it provides a public marketing homepage and
+separate dashboards for administrators and regular users with appropriate access
+controls.
 
 ### How It Works
 
@@ -170,9 +171,13 @@ src/
 
 ## Database Schema
 
-Six models: **User**, **Product**, **Order**, **OrderItem**, **RestockRequest**,
-**RestockRequestItem** — with full relational mapping for inventory, orders, and
-restock workflows. See `prisma/schema.prisma` for details.
+Nine models: **User**, **Category**, **Product**, **ProductImage**,
+**ProductVariant**, **Order**, **OrderItem**, **RestockRequest**,
+**RestockRequestItem** — with full relational mapping for inventory (products
+with variants and categories), orders, and restock workflows. Pricing and stock
+live on product **variants**; orders and restock requests reference variants
+directly. The datamodel is split across `prisma/enums/` and `prisma/models/`.
+See `prisma/` for details.
 
 ---
 

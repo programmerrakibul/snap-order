@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import {
+  ProductStatus,
   RestockStatus,
   type RestockRequestItem,
 } from "@/generated/prisma/client";
@@ -30,22 +31,25 @@ async function handleRestock(req: NextRequest) {
   }
 
   try {
-    const restockItemsId = await prisma.restockRequestItem.findMany({
+    const restockItemIds = await prisma.restockRequestItem.findMany({
       where: {
         restockRequest: {
           status: RestockStatus.PENDING,
         },
       },
       select: {
-        productId: true,
+        productVariantId: true,
       },
     });
 
-    const res = await prisma.product.findMany({
+    const res = await prisma.productVariant.findMany({
       where: {
         isActive: true,
         stock: {
-          lte: prisma.product.fields.minThreshold,
+          lte: prisma.productVariant.fields.minThreshold,
+        },
+        product: {
+          status: ProductStatus.ACTIVE,
         },
       },
       select: {
@@ -57,17 +61,22 @@ async function handleRestock(req: NextRequest) {
     });
 
     const items = res.reduce(
-      (acc: Pick<RestockRequestItem, "productId" | "quantity">[], product) => {
-        const { stock, minThreshold, maxThreshold, id: productId } = product;
+      (
+        acc: Pick<RestockRequestItem, "productVariantId" | "quantity">[],
+        variant,
+      ) => {
+        const { stock, minThreshold, maxThreshold, id: variantId } = variant;
 
         if (
-          !restockItemsId.some((item) => item.productId === productId) &&
+          !restockItemIds.some(
+            (item) => item.productVariantId === variantId,
+          ) &&
           stock < minThreshold
         ) {
           const quantity = maxThreshold - stock;
 
           acc.push({
-            productId,
+            productVariantId: variantId,
             quantity,
           });
         }
@@ -93,6 +102,7 @@ async function handleRestock(req: NextRequest) {
     });
 
     revalidatePath("/dashboard/restock-products");
+    revalidatePath("/dashboard");
 
     return NextResponse.json(
       {

@@ -1,22 +1,4 @@
-import { TProduct } from "@/types/product.interface";
-import { RestockRequestItem, RestockRequest } from "@/generated/prisma/client";
+import { RestockStatus } from "@/generated/prisma/enums";
 
-export type TRestockRequest = Omit<
-  RestockRequest,
-  "createdAt" | "updatedAt" | "approvedAt" | "cancelledAt" | "items"
-> & {
-  createdAt: string;
-  updatedAt: string;
-  approvedAt: string | null;
-  cancelledAt: string | null;
-  items: TRestockRequestItem[];
-};
-
-export type TRestockRequestItem = Omit<
-  RestockRequestItem,
-  "createdAt" | "updatedAt" | "product"
-> & {
-  createdAt: string;
-  updatedAt: string;
-  product: Pick<TProduct, "name" | "stock" | "minThreshold" | "maxThreshold">;
-};
+export type TRestockRequestItem = { id: string; restockRequestId: string; productVariantId: string; quantity: number; createdAt: string; updatedAt: string; productVariant: { sku: string; stock: number; minThreshold: number; maxThreshold: number; productName: string } };
+export type TRestockRequest = { id: string; status: RestockStatus; stockedById: string | null; createdAt: string; updatedAt: string; approvedAt: string | null; cancelledAt: string | null; items: TRestockRequestItem[] };

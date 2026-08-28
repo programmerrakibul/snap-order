@@ -51,7 +51,7 @@ export default function RestockRequestDetail({
     setIsSubmitting(true);
 
     const items = request.items.map((item) => ({
-      productId: item.productId,
+      productVariantId: item.productVariantId,
       quantity: approvedQuantities[item.id] ?? item.quantity,
     }));
 

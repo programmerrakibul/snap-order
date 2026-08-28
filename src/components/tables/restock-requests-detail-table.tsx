@@ -23,17 +23,17 @@ const RestockRequestsDetailTable = ({
   const columns: DataTableColumn<TRestockRequestItem>[] = [
     {
       header: "Product",
-      accessor: "product",
+      accessor: "productVariant",
       className: "font-medium",
-      cell: (_value, row) => row.product.name,
+      cell: (_value, row) => row.productVariant.productName,
     },
     {
       header: "Current Stock",
-      accessor: "product",
+      accessor: "productVariant",
       className: "text-center",
       cell: (_value, row) => (
-        <Badge variant={row.product.stock > 0 ? "default" : "destructive"}>
-          {row.product.stock}
+        <Badge variant={row.productVariant.stock > 0 ? "default" : "destructive"}>
+          {row.productVariant.stock}
         </Badge>
       ),
     },
@@ -50,7 +50,7 @@ const RestockRequestsDetailTable = ({
       cell: (_value, row) => (
         <Input
           type="number"
-          min={row.product.minThreshold - row.product.stock}
+          min={row.productVariant.minThreshold - row.productVariant.stock}
           value={approvedQuantities[row.id]}
           onChange={(event) => handleQuantityChange(row.id, event.target.value)}
           className="mx-auto max-w-30 text-center"
@@ -59,10 +59,10 @@ const RestockRequestsDetailTable = ({
     },
     {
       header: "Projected Stock",
-      accessor: "product",
+      accessor: "productVariant",
       className: "text-center",
       cell: (_value, row) =>
-        row.product.stock + (approvedQuantities[row.id] ?? row.quantity),
+        row.productVariant.stock + (approvedQuantities[row.id] ?? row.quantity),
     },
   ];
 

@@ -8,7 +8,7 @@ import {
 import { Controller, useForm } from "react-hook-form";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { TProduct } from "@/types/product.interface";
+import { TProduct, TProductVariant } from "@/types/product.interface";
 import { Button } from "@/components/ui/button";
 import { IconLoader } from "@tabler/icons-react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,9 +20,14 @@ import { Dispatch, SetStateAction } from "react";
 interface OrderProductFormProps {
   setIsOpen: Dispatch<SetStateAction<boolean>>;
   product: TProduct;
+  variant: TProductVariant;
 }
 
-const OrderProductForm = ({ product, setIsOpen }: OrderProductFormProps) => {
+const OrderProductForm = ({
+  product,
+  variant,
+  setIsOpen,
+}: OrderProductFormProps) => {
   const { user } = useUserData();
   const {
     handleSubmit,
@@ -38,7 +43,7 @@ const OrderProductForm = ({ product, setIsOpen }: OrderProductFormProps) => {
   });
 
   const onSubmit = async (data: TCreateOrderOutput) => {
-    if (!user || !product) {
+    if (!user || !product || !variant) {
       toast.error("User or product information is missing");
       return;
     }
@@ -49,7 +54,7 @@ const OrderProductForm = ({ product, setIsOpen }: OrderProductFormProps) => {
         shippingAddress: data.shippingAddress,
         items: [
           {
-            productId: product.id,
+            productVariantId: variant.id,
             quantity: data.quantity,
           },
         ],
@@ -71,7 +76,6 @@ const OrderProductForm = ({ product, setIsOpen }: OrderProductFormProps) => {
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        {/* Quantity Input */}
         <Controller
           name="quantity"
           control={control}
@@ -85,7 +89,7 @@ const OrderProductForm = ({ product, setIsOpen }: OrderProductFormProps) => {
                 type="number"
                 placeholder="10"
                 min="1"
-                max={product.stock}
+                max={variant.stock}
                 disabled={isSubmitting}
                 aria-invalid={invalid}
                 {...field}
@@ -98,7 +102,6 @@ const OrderProductForm = ({ product, setIsOpen }: OrderProductFormProps) => {
           )}
         />
 
-        {/* Shipping Address Input */}
         <Controller
           name="shippingAddress"
           control={control}
@@ -121,7 +124,6 @@ const OrderProductForm = ({ product, setIsOpen }: OrderProductFormProps) => {
           )}
         />
 
-        {/* Submit Button */}
         <Button type="submit" disabled={isSubmitting} className="w-full">
           {isSubmitting ? (
             <>

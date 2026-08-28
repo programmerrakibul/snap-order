@@ -15,46 +15,57 @@ export const createOrder = async (
     const { userId, shippingAddress, items } = input;
 
     await prisma.$transaction(async (tx) => {
-      // 1. Validate stock and get product details
-      const products = await tx.product.findMany({
+      const variants = await tx.productVariant.findMany({
         where: {
-          id: { in: items.map((item) => item.productId) },
+          id: { in: items.map((item) => item.productVariantId) },
+          isActive: true,
+        },
+        include: {
+          product: {
+            select: {
+              name: true,
+            },
+          },
         },
       });
 
-      // 2. Check stock availability
       for (const item of items) {
-        const product = products.find((p) => p.id === item.productId);
+        const variant = variants.find(
+          (v) => v.id === item.productVariantId,
+        );
 
-        if (!product) {
-          throw new BadRequestError(`Product not found: ${item.productId}`);
+        if (!variant) {
+          throw new BadRequestError(
+            `Variant not found: ${item.productVariantId}`,
+          );
         }
 
-        if (product.stock < item.quantity) {
+        if (variant.stock < item.quantity) {
           throw new BadRequestError(
-            `Insufficient stock for ${product.name}. Available: ${product.stock}`,
+            `Insufficient stock for ${variant.product.name} (${variant.sku}). Available: ${variant.stock}`,
           );
         }
       }
 
-      // 3. Calculate total and prepare order items
       let totalAmount = 0;
       const orderItemsData = [];
 
       for (const item of items) {
-        const product = products.find((p) => p.id === item.productId)!;
+        const variant = variants.find(
+          (v) => v.id === item.productVariantId,
+        )!;
 
-        const subtotal = product.price.toNumber() * item.quantity;
+        const unitPrice = variant.discountAmount ?? variant.originalPrice;
+        const subtotal = unitPrice.toNumber() * item.quantity;
         totalAmount += subtotal;
 
         orderItemsData.push({
-          productId: item.productId,
+          productVariantId: item.productVariantId,
           quantity: item.quantity,
-          unitPrice: product.price,
+          unitPrice,
         });
       }
 
-      // 4. Create Order + OrderItems
       await tx.order.create({
         data: {
           orderNumber: `ORD-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
@@ -71,10 +82,9 @@ export const createOrder = async (
         },
       });
 
-      // 5. Deduct stock
       for (const item of items) {
-        await tx.product.update({
-          where: { id: item.productId },
+        await tx.productVariant.update({
+          where: { id: item.productVariantId },
           data: {
             stock: { decrement: item.quantity },
           },
@@ -82,9 +92,9 @@ export const createOrder = async (
       }
     });
 
-    // 6. Invalidate cache
     revalidatePath("/dashboard/products");
     revalidatePath("/dashboard/orders");
+    revalidatePath("/dashboard");
 
     return {
       success: true,
@@ -128,7 +138,22 @@ export const getAllOrders = async () => {
         createdAt: "desc",
       },
       include: {
-        items: true,
+        items: {
+          include: {
+            productVariant: {
+              select: {
+                id: true,
+                sku: true,
+                attributes: true,
+                product: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
         user: {
           select: {
             name: true,
@@ -146,6 +171,9 @@ export const getAllOrders = async () => {
       items: order.items.map((item) => ({
         ...item,
         unitPrice: Number(item.unitPrice),
+        productName: item.productVariant.product.name,
+        variantSku: item.productVariant.sku,
+        productVariantId: item.productVariantId,
         createdAt: item.createdAt.toISOString(),
         updatedAt: item.updatedAt.toISOString(),
       })),
@@ -188,7 +216,6 @@ export const updateOrderStatusById = async (
       },
     });
 
-    // Invalidate cache
     revalidatePath("/dashboard/orders");
 
     return {
@@ -222,7 +249,6 @@ export const deleteOrderById = async (orderId: string) => {
       },
     });
 
-    // Invalidate cache
     revalidatePath("/dashboard/orders");
 
     return {

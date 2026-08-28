@@ -1,54 +1,41 @@
+import { DiscountType } from "@/generated/prisma/enums";
 import { z } from "zod";
 
+const money = (min = 0) =>
+  z.coerce
+    .number()
+    .finite()
+    .min(min)
+    .transform((value) => Number(value.toFixed(2)));
+
 export const productSchema = z.object({
-  name: z
-    .string({
-      error: (val) => {
-        return val.input === undefined
-          ? "Name field is required!"
-          : "Invalid name value!";
-      },
-    })
+  name: z.string().trim().min(3).max(100),
+  description: z.string().trim().min(15).max(500),
+  brand: z.string().trim().max(80).optional(),
+  categoryName: z.string().trim().min(2).max(80),
+  tags: z.string().trim().max(250).optional(),
+  imageUrl: z.union([z.url(), z.literal("")]).optional(),
+  sku: z
+    .string()
     .trim()
-    .min(3, "Name must be at least 3 characters long!")
-    .max(50, "Name must be at most 50 characters long!"),
-
-  description: z
-    .string({
-      error: (val) => {
-        return val.input === undefined
-          ? "Description field is required!"
-          : "Invalid description value!";
-      },
-    })
-    .trim()
-    .min(15, "Description must be at least 15 characters long!")
-    .max(500, "Description must be at most 500 characters long!"),
-
-  price: z.coerce
-    .number({
-      error: (val) => {
-        return val.input === undefined
-          ? "Price field is required!"
-          : "Invalid price value!";
-      },
-    })
-    .refine((val) => !isNaN(val), "Price must be a number!")
-    .min(1, "Price must be at least 1!")
-    .max(10000, "Price must be at most 10000!")
-    .transform((val) => parseFloat(val.toFixed(2))),
-
-  stock: z.coerce
-    .number({
-      error: (val) => {
-        return val.input === undefined
-          ? "Stock field is required!"
-          : "Invalid stock value!";
-      },
-    })
-    .refine((val) => !isNaN(val), "Stock must be a number!")
-    .min(1, "Stock must be at least 1!")
-    .max(10000, "Stock must be at most 10000!"),
+    .toUpperCase()
+    .regex(/^[A-Z0-9-]{6,12}$/, "SKU must contain 6-12 uppercase letters, numbers, or hyphens."),
+  attributes: z.string().trim().optional(),
+  stock: z.coerce.number().int().min(0).max(100000),
+  minThreshold: z.coerce.number().int().min(0).max(100000).default(10),
+  maxThreshold: z.coerce.number().int().min(1).max(100000).default(100),
+  costPrice: money(),
+  originalPrice: money(0.01),
+  discountType: z.enum([DiscountType.PERCENTAGE, DiscountType.FIXED]).optional(),
+  discountValue: money().optional(),
+  supplierId: z.string().trim().optional(),
+}).superRefine((data, context) => {
+  if (data.minThreshold > data.maxThreshold)
+    context.addIssue({ code: "custom", path: ["minThreshold"], message: "Minimum threshold cannot exceed the maximum threshold." });
+  if (data.costPrice > data.originalPrice)
+    context.addIssue({ code: "custom", path: ["costPrice"], message: "Cost price cannot exceed the selling price." });
+  if (data.discountType && data.discountValue === undefined)
+    context.addIssue({ code: "custom", path: ["discountValue"], message: "Discount value is required when a discount type is selected." });
 });
 
 export type TProductInput = z.input<typeof productSchema>;
