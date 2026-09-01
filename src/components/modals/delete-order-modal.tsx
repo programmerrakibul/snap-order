@@ -103,7 +103,7 @@ export default function DeleteOrderModal({
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Amount:</span>
                 <span className="text-sm font-semibold text-primary">
-                  ${totalAmount.toFixed(2)}
+                  ৳{totalAmount.toFixed(2)}
                 </span>
               </div>
             </div>

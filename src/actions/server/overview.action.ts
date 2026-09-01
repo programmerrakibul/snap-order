@@ -78,7 +78,7 @@ export const getAdminOverviewData = async () => {
         createdAt: "desc",
       },
       include: {
-        user: {
+        customer: {
           select: {
             name: true,
             email: true,
@@ -204,7 +204,7 @@ export const getAdminOverviewData = async () => {
     recentOrders: recentOrders.map((order) => ({
       id: order.id,
       orderNumber: order.orderNumber,
-      customer: order.user.name || order.user.email,
+      customer: order.customer.name || order.customer.email,
       status: order.status,
       totalAmount: order.totalAmount.toNumber(),
       items: order.items.length,
@@ -236,7 +236,7 @@ export const getUserOverviewData = async () => {
     await Promise.all([
       prisma.order.findMany({
         where: {
-          userId: user.id,
+          customerId: user.id,
           createdAt: {
             gte: fromDate,
           },
@@ -249,7 +249,7 @@ export const getUserOverviewData = async () => {
       }),
       prisma.order.findMany({
         where: {
-          userId: user.id,
+          customerId: user.id,
         },
         take: 5,
         orderBy: {

@@ -14,7 +14,7 @@ import {
   IconChartBar,
   IconCheck,
   IconClock,
-  IconCurrencyDollar,
+  IconCurrencyTaka,
   IconPackage,
   IconShoppingBag,
 } from "@tabler/icons-react";
@@ -22,7 +22,8 @@ import Link from "next/link";
 
 const money = new Intl.NumberFormat("en-US", {
   style: "currency",
-  currency: "USD",
+  currency: "BDT",
+  currencyDisplay: "narrowSymbol",
   maximumFractionDigits: 0,
 });
 
@@ -45,7 +46,7 @@ const UserOverview = async () => {
               title="7-day spend"
               value={money.format(summary.totalSpent)}
               detail={`${number.format(summary.totalOrders)} recent orders`}
-              icon={IconCurrencyDollar}
+              icon={IconCurrencyTaka}
               tone="bg-emerald-500/10 text-emerald-600"
             />
             <MetricCard
@@ -88,7 +89,7 @@ const UserOverview = async () => {
                 </Badge>
               </CardHeader>
               <CardContent>
-                <BarChart data={spendingByDay} valuePrefix="$" />
+                <BarChart data={spendingByDay} valuePrefix="৳" />
               </CardContent>
             </Card>
 

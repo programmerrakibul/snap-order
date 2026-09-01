@@ -66,11 +66,20 @@ export default function OrdersTable({
       },
     },
     {
+      header: "Recipient",
+      accessor: "shippingName",
+      cell: (value) => (
+        <span className="text-muted-foreground">
+          {String(value)}
+        </span>
+      ),
+    },
+    {
       header: "Amount",
       accessor: "totalAmount",
       cell: (value) => (
         <span className="font-semibold text-primary">
-          ${Number(value).toFixed(2)}
+          ৳{Number(value).toFixed(2)}
         </span>
       ),
       className: "text-right",

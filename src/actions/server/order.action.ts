@@ -1,6 +1,6 @@
 "use server";
 
-import { OrderStatus, Role } from "@/generated/prisma/enums";
+import { OrderStatus, ProductStatus, Role } from "@/generated/prisma/enums";
 import prisma from "@/lib/prisma";
 import { TCreateOrderInput, TOrderResponse } from "@/types/order.interface";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
@@ -12,7 +12,20 @@ export const createOrder = async (
   input: TCreateOrderInput,
 ): Promise<TOrderResponse> => {
   try {
-    const { userId, shippingAddress, items } = input;
+    const {
+      customerId,
+      shippingName,
+      shippingPhone,
+      shippingAddress,
+      shippingArea,
+      shippingThana,
+      shippingDistrict,
+      shippingDivision,
+      shippingPostalCode,
+      shippingNote,
+      customerNote,
+      items,
+    } = input;
 
     await prisma.$transaction(async (tx) => {
       const variants = await tx.productVariant.findMany({
@@ -59,18 +72,30 @@ export const createOrder = async (
         const subtotal = unitPrice.toNumber() * item.quantity;
         totalAmount += subtotal;
 
+        const discountAmount = variant.discountAmount?.toNumber() ?? null;
+
         orderItemsData.push({
           productVariantId: item.productVariantId,
           quantity: item.quantity,
-          unitPrice,
+          totalPrice: subtotal.toFixed(2),
+          discountAmount: discountAmount !== null ? discountAmount.toFixed(2) : null,
         });
       }
 
       await tx.order.create({
         data: {
           orderNumber: `ORD-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
-          userId,
+          customerId,
+          shippingName,
+          shippingPhone,
           shippingAddress,
+          shippingArea,
+          shippingThana,
+          shippingDistrict,
+          shippingDivision,
+          shippingPostalCode: shippingPostalCode || null,
+          shippingNote: shippingNote || null,
+          customerNote: customerNote || null,
           totalAmount: totalAmount.toFixed(2),
           status: OrderStatus.PENDING,
           items: {
@@ -129,7 +154,7 @@ export const getAllOrders = async () => {
     if (!user) return [];
 
     const where = {
-      userId: user.role === Role.ADMIN ? undefined : user.id,
+      customerId: user.role === Role.ADMIN ? undefined : user.id,
     };
 
     const res = await prisma.order.findMany({
@@ -154,7 +179,7 @@ export const getAllOrders = async () => {
             },
           },
         },
-        user: {
+        customer: {
           select: {
             name: true,
             email: true,
@@ -168,9 +193,14 @@ export const getAllOrders = async () => {
       totalAmount: Number(order.totalAmount),
       createdAt: order.createdAt.toISOString(),
       updatedAt: order.updatedAt.toISOString(),
+      cancelledAt: order.cancelledAt?.toISOString() ?? null,
+      confirmedAt: order.confirmedAt?.toISOString() ?? null,
+      shippedAt: order.shippedAt?.toISOString() ?? null,
+      deliveredAt: order.deliveredAt?.toISOString() ?? null,
       items: order.items.map((item) => ({
         ...item,
-        unitPrice: Number(item.unitPrice),
+        totalPrice: Number(item.totalPrice),
+        discountAmount: item.discountAmount ? Number(item.discountAmount) : null,
         productName: item.productVariant.product.name,
         variantSku: item.productVariant.sku,
         productVariantId: item.productVariantId,
@@ -207,13 +237,25 @@ export const updateOrderStatusById = async (
       };
     }
 
+    const statusUpdate: Record<string, unknown> = {
+      status: newStatus,
+    };
+
+    if (newStatus === OrderStatus.CONFIRMED) {
+      statusUpdate.confirmedAt = new Date();
+    } else if (newStatus === OrderStatus.SHIPPED) {
+      statusUpdate.shippedAt = new Date();
+    } else if (newStatus === OrderStatus.DELIVERED) {
+      statusUpdate.deliveredAt = new Date();
+    } else if (newStatus === OrderStatus.CANCELLED) {
+      statusUpdate.cancelledAt = new Date();
+    }
+
     await prisma.order.update({
       where: {
         id: orderId,
       },
-      data: {
-        status: newStatus,
-      },
+      data: statusUpdate,
     });
 
     revalidatePath("/dashboard/orders");
@@ -245,7 +287,7 @@ export const deleteOrderById = async (orderId: string) => {
     await prisma.order.delete({
       where: {
         id: orderId,
-        userId: user.role === Role.ADMIN ? undefined : user.id,
+        customerId: user.role === Role.ADMIN ? undefined : user.id,
       },
     });
 
@@ -262,5 +304,78 @@ export const deleteOrderById = async (orderId: string) => {
       success: false,
       message: "Failed to delete order!",
     };
+  }
+};
+
+export const getCheckoutData = async (variantId: string) => {
+  try {
+    const user = await isAuthenticated();
+
+    if (!user) return null;
+
+    const variant = await prisma.productVariant.findUnique({
+      where: { id: variantId },
+      select: {
+        id: true,
+        sku: true,
+        attributes: true,
+        stock: true,
+        originalPrice: true,
+        discountAmount: true,
+        discountType: true,
+        discountValue: true,
+        product: {
+          select: {
+            id: true,
+            name: true,
+            status: true,
+            slug: true,
+            variants: {
+              where: { isActive: true },
+              orderBy: { createdAt: "asc" },
+              select: {
+                id: true,
+                sku: true,
+                attributes: true,
+                stock: true,
+                originalPrice: true,
+                discountAmount: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!variant) return null;
+    if (variant.product.status !== ProductStatus.ACTIVE) return null;
+
+    return {
+      productId: variant.product.id,
+      productName: variant.product.name,
+      productSlug: variant.product.slug,
+      selected: {
+        variantId: variant.id,
+        productName: variant.product.name,
+        sku: variant.sku,
+        attributes: (variant.attributes ?? {}) as Record<string, string>,
+        unitPrice: Number(variant.originalPrice),
+        discountAmount: variant.discountAmount
+          ? Number(variant.discountAmount)
+          : null,
+        stock: variant.stock,
+      },
+      variants: variant.product.variants.map((v) => ({
+        variantId: v.id,
+        sku: v.sku,
+        attributes: (v.attributes ?? {}) as Record<string, string>,
+        unitPrice: Number(v.originalPrice),
+        discountAmount: v.discountAmount ? Number(v.discountAmount) : null,
+        stock: v.stock,
+      })),
+    };
+  } catch (error: unknown) {
+    console.error("Error fetching checkout data: ", error);
+    return null;
   }
 };
