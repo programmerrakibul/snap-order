@@ -40,7 +40,7 @@ const UserOverview = async () => {
     <section className="py-8">
       <Container>
         <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
             <MetricCard
               title="7-day spend"
               value={money.format(summary.totalSpent)}
@@ -71,7 +71,7 @@ const UserOverview = async () => {
             />
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.9fr)]">
+          <div className="grid gap-6 grid-cols-1 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.9fr)]">
             <Card className="rounded-lg shadow-sm">
               <CardHeader className="flex-row items-center justify-between gap-3">
                 <div>
@@ -108,7 +108,7 @@ const UserOverview = async () => {
             </Card>
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-3">
+          <div className="grid gap-6 grid-cols-1 xl:grid-cols-3">
             <Card className="rounded-lg shadow-sm xl:col-span-2">
               <CardHeader className="flex-row items-center justify-between gap-3">
                 <div>
