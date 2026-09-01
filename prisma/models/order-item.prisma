@@ -1,12 +1,13 @@
 model OrderItem {
-  id               String  @id @default(cuid())
-  orderId          String
-  productVariantId String
-  quantity         Int
-  unitPrice        Decimal @db.Decimal(10, 2)
+  id             String   @id @default(cuid())
+  quantity       Int      @default(1)
+  totalPrice     Decimal  @db.Decimal(12, 2)
+  discountAmount Decimal? @db.Decimal(12, 2)
 
-  order   Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productVariant ProductVariant @relation(fields: [productVariantId], references: [id])
+  orderId          String
+  order            Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productVariantId String
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt

@@ -10,11 +10,11 @@ model ProductVariant {
   minThreshold Int @default(10)
   maxThreshold Int @default(100)
 
-  costPrice      Decimal       @db.Decimal(10, 2)
-  originalPrice  Decimal       @db.Decimal(10, 2)
-  discountAmount Decimal?      @db.Decimal(10, 2)
+  costPrice      Decimal       @db.Decimal(12, 2)
+  originalPrice  Decimal       @db.Decimal(12, 2)
+  discountAmount Decimal?      @db.Decimal(12, 2)
   discountType   DiscountType?
-  discountValue  Decimal?      @db.Decimal(10, 2)
+  discountValue  Decimal?      @db.Decimal(12, 2)
 
   isActive Boolean @default(true)
 
