@@ -23,6 +23,7 @@ UI levels.
 | Email           | Nodemailer (Gmail OAuth2) + React Email templates            |
 | Uploads         | Cloudinary                                                   |
 | Validation      | Zod (env vars, inputs, schemas)                              |
+| Geo/Address     | @olism/bd-geo (BD divisions, districts, upazilas)            |
 | Package Manager | npm                                                          |
 
 ---
@@ -59,6 +60,7 @@ src/
 │   │   ├── add-products/        # Admin only
 │   │   ├── edit-product/[id]/   # Admin only — edit product + manage variants
 │   │   ├── products/            # Product listing
+│   │   ├── checkout/            # Single-item checkout (variant chips + order form)
 │   │   ├── categories/          # Admin only — category CRUD
 │   │   ├── orders/              # Order listing
 │   │   ├── customers/           # Admin only
@@ -96,17 +98,17 @@ src/
 
 ## Database Models
 
-| Model                  | Key Fields                                                                                                                                                                | Relations                                                                                |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| **User**               | id, email, password, role (USER/ADMIN), isVerified, isActive, verification/reset OTP fields, lastLoggedIn                                                                 | orders[], productVariants[](supplier), restockRequests[](stockedBy)                      |
-| **Category**           | id, name, slug(unique), image                                                                                                                                             | products[]                                                                               |
-| **Product**            | id, name, description, brand, tags(String[]), slug(unique), status(DRAFT/ACTIVE/ARCHIVED/OUT_OF_STOCK), isFeatured, categoryId                                            | category, images[](ProductImage), variants[](ProductVariant)                             |
-| **ProductImage**       | id, url, altText, isPrimary, productId (cascade DELETE)                                                                                                                   | product                                                                                  |
-| **ProductVariant**     | id, sku(unique, Char(12)), attributes(Json), stock, minThreshold(10), maxThreshold(100), costPrice, originalPrice, discountAmount/Type/Value, supplierId, lastRestockedAt | product(cascade), items[](OrderItem), restockItems[](RestockRequestItem), supplier(User) |
-| **Order**              | id, orderNumber(unique), status(PENDING/CONFIRMED/SHIPPED/DELIVERED/CANCELLED), totalAmount(Decimal), userId, shippingAddress                                             | user, items[](OrderItem, cascade)                                                        |
-| **OrderItem**          | id, orderId, productVariantId, quantity, unitPrice(Decimal)                                                                                                               | order(cascade), productVariant                                                           |
-| **RestockRequest**     | id, status(PENDING/APPROVED/CANCELLED), stockedById, approvedAt, cancelledAt                                                                                              | stockedBy(User), items[](RestockRequestItem, cascade)                                    |
-| **RestockRequestItem** | id, restockRequestId, productVariantId, quantity                                                                                                                          | productVariant, restockRequest(cascade)                                                  |
+| Model                  | Key Fields                                                                                                                                                                                                                                                                                                                   | Relations                                                                                |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **User**               | id, email, password, role (USER/ADMIN), isVerified, isActive, verification/reset OTP fields, lastLoggedIn                                                                                                                                                                                                                    | orders[](customer), productVariants[](supplier), restockRequests[](stockedBy)            |
+| **Category**           | id, name, slug(unique), image                                                                                                                                                                                                                                                                                                | products[]                                                                               |
+| **Product**            | id, name, description, brand, tags(String[]), slug(unique), status(DRAFT/ACTIVE/ARCHIVED/OUT_OF_STOCK), isFeatured, categoryId                                                                                                                                                                                               | category, images[](ProductImage), variants[](ProductVariant)                             |
+| **ProductImage**       | id, url, altText, isPrimary, productId (cascade DELETE)                                                                                                                                                                                                                                                                      | product                                                                                  |
+| **ProductVariant**     | id, sku(unique, Char(12)), attributes(Json), stock, minThreshold(10), maxThreshold(100), costPrice, originalPrice, discountAmount/Type/Value, supplierId, lastRestockedAt                                                                                                                                                    | product(cascade), items[](OrderItem), restockItems[](RestockRequestItem), supplier(User) |
+| **Order**              | id, orderNumber(unique), status(PENDING/CONFIRMED/SHIPPED/DELIVERED/CANCELLED), totalAmount(Decimal), customerId, shippingName, shippingPhone(Char 11), shippingAddress/Area/Thana/District/Division, shippingPostalCode?, shippingNote?, customerNote?, confirmedAt/shippedAt/deliveredAt/cancelledAt?, cancellationReason? | customer(User), items[](OrderItem, cascade)                                              |
+| **OrderItem**          | id, orderId, productVariantId, quantity, totalPrice(Decimal), discountAmount?                                                                                                                                                                                                                                                | order(cascade), productVariant                                                           |
+| **RestockRequest**     | id, status(PENDING/APPROVED/CANCELLED), stockedById, approvedAt, cancelledAt                                                                                                                                                                                                                                                 | stockedBy(User), items[](RestockRequestItem, cascade)                                    |
+| **RestockRequestItem** | id, restockRequestId, productVariantId, quantity                                                                                                                                                                                                                                                                             | productVariant, restockRequest(cascade)                                                  |
 
 ---
 
@@ -145,11 +147,11 @@ dashboard).
 
 ### Products & Variants
 
-- Admin creates products via `/dashboard/add-products` and edits/extends them via
-  `/dashboard/edit-product/[id]` (pencil action in the products table)
-- A product supports **multiple variants** — each with its own unique SKU, stock,
-  min/max thresholds, cost/selling prices, discount, and structured attribute
-  key/value rows (serialized to the `attributes` Json column)
+- Admin creates products via `/dashboard/add-products` and edits/extends them
+  via `/dashboard/edit-product/[id]` (pencil action in the products table)
+- A product supports **multiple variants** — each with its own unique SKU,
+  stock, min/max thresholds, cost/selling prices, discount, and structured
+  attribute key/value rows (serialized to the `attributes` Json column)
 - **Images**: multiple per product (min 1, first is primary); uploaded via
   Cloudinary `ImageUpload` with instant preview, replaced wholesale on edit
 - Removed variants are **deactivated** (`isActive = false`), never hard-deleted,
@@ -162,8 +164,27 @@ dashboard).
 
 - Created via `createOrder` server action inside a Prisma `$transaction`
 - Validates stock, deducts inventory atomically with order creation
-- Status lifecycle: PENDING → CONFIRMED → SHIPPED → DELIVERED (admin-managed)
+- Status lifecycle: PENDING → CONFIRMED → SHIPPED → DELIVERED (admin-managed);
+  `updateOrderStatusById` records timestamps — `confirmedAt`, `shippedAt`,
+  `deliveredAt`, plus `cancelledAt` and `cancellationReason` on cancel
+- Orders reference a `customer` (`customerId`) and store the full Bangladesh
+  shipping address (division, district, thana, area, phone, postal code, notes)
 - Users can delete only their own PENDING orders; admins can delete any
+
+### Checkout
+
+- Single-item checkout at `/dashboard/checkout?variantId=...`; the entry point
+  is the cart icon in the products table (defaults to
+  `primaryVariantId ?? variants[0].id`)
+- Multi-variant products render chip links to switch the variant via the URL
+  param (server re-render); out-of-stock variants are disabled
+- `getCheckoutData(variantId)` returns the product name, all active variants,
+  and the selected variant
+- Shipping address uses cascading Division → District → Thana selects populated
+  from `@olism/bd-geo` and driven by RHF `useWatch`; values stored as English
+  names
+- Order is placed via `createOrder` with `items[]` (single slot for the chosen
+  variant)
 
 ### Restock
 
@@ -235,3 +256,7 @@ npx prisma generate        # Regenerate Prisma client
 - Always prefer editing existing files over creating new ones
 - Match existing patterns (import style, component structure, naming
   conventions)
+- Prices render in Bangladeshi Taka (৳/BDT) — via `Intl.NumberFormat` with
+  `currency: "BDT", currencyDisplay: "narrowSymbol"` or a literal `৳` prefix,
+  and `IconCurrencyTaka` (never `$` / `IconCurrencyDollar`)
+- BD address options come from `@olism/bd-geo` (never hand-written address data)

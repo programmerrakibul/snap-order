@@ -18,8 +18,9 @@ controls.
 
 ### How It Works
 
-1. **Users** register, verify their email, browse available products, place
-   orders, and track order status.
+1. **Users** register, verify their email, browse available products, complete a
+   single-variant checkout with a Bangladesh shipping address
+   (division/district/thana), and track order status.
 2. **Admins** manage the product catalog, oversee all customer orders, update
    order statuses, and approve/cancel automated restock requests.
 3. **Restock automation** runs daily via a cron job — when product stock drops
@@ -61,8 +62,12 @@ controls.
   each with its own SKU, stock, thresholds, prices, and structured attributes
 - **Category Management**: Admin CRUD for categories with auto-generated slugs
   and image upload
-- **Order Processing**: Place orders with atomic stock deduction, status
-  tracking (PENDING → CONFIRMED → SHIPPED → DELIVERED)
+- **Checkout Page**: Single-item checkout with variant selection chips, quantity
+  controls, atomic stock deduction, and a cascading Bangladesh address form
+  (division → district → thana/upazila via `@olism/bd-geo`); prices shown in
+  Bangladeshi Taka (৳)
+- **Order Processing**: Status tracking with lifecycle timestamps (PENDING →
+  CONFIRMED → SHIPPED → DELIVERED), plus cancellations with a reason
 - **Automated Restock**: Daily cron checks stock thresholds, creates pending
   restock requests; admins approve with adjustable quantities
 - **Customer Management**: Admin view of all registered users
@@ -138,13 +143,13 @@ sign in to access the dashboard.
 
 ## Scripts
 
-| Command         | Description                           |
-| --------------- | ------------------------------------- |
-| `npm run dev`   | Start development server on port 3000 |
-| `npm run build` | Create production build               |
-| `npm run start` | Start production server               |
-| `npm run lint`  | Run ESLint                            |
-| `npm run clean` | Remove build artifacts                |
+| Command           | Description                            |
+| ----------------- | -------------------------------------- |
+| `npm run dev`     | Start development server on port 3000  |
+| `npm run build`   | Create production build                |
+| `npm run start`   | Start production server                |
+| `npm run lint`    | Run ESLint                             |
+| `npm run clean`   | Remove build artifacts                 |
 | `npm run db:seed` | Seed demo data (categories + products) |
 
 ---
@@ -159,7 +164,8 @@ src/
 ├── app/                        # Next.js App Router pages
 │   ├── page.tsx                # Public marketing homepage
 │   ├── auth/                   # Login, registration, forgot password
-│   ├── dashboard/              # Protected pages (overview, products, orders, categories, etc.)
+│   ├── dashboard/              # Protected pages (overview, products, checkout, orders, etc.)
+│   │   ├── checkout/           # Single-product checkout (`?variantId=`)
 │   │   └── edit-product/[id]/  # Admin-only product & variant editor
 │   └── api/restock-check/      # Cron endpoint for automated restock
 ├── components/
@@ -185,8 +191,12 @@ Nine models: **User**, **Category**, **Product**, **ProductImage**,
 **RestockRequestItem** — with full relational mapping for inventory (products
 with variants and categories), orders, and restock workflows. Pricing and stock
 live on product **variants**; orders and restock requests reference variants
-directly. Removed variants are soft-deactivated (`isActive = false`) so order and
-restock history stays intact. The datamodel is split across `prisma/enums/` and
+directly. Orders reference the buying user via `customerId`, capture the full
+Bangladesh shipping details (division, district, thana, area, phone, postal
+code), and record status timestamps (`confirmedAt`, `shippedAt`, `deliveredAt`,
+`cancelledAt`); line items store `totalPrice` plus an optional `discountAmount`.
+Removed variants are soft-deactivated (`isActive = false`) so order and restock
+history stays intact. The datamodel is split across `prisma/enums/` and
 `prisma/models/`. See `prisma/` for details.
 
 ---
