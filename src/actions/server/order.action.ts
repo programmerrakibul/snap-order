@@ -7,6 +7,7 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { BadRequestError, HttpError } from "http-errors-enhanced";
 import { cacheLife, revalidatePath } from "next/cache";
 import { isAuthenticated } from "./isAuthenticated";
+import { createInvoiceByOrderId } from "./invoice.action";
 
 export const createOrder = async (
   input: TCreateOrderInput,
@@ -257,6 +258,10 @@ export const updateOrderStatusById = async (
       },
       data: statusUpdate,
     });
+
+    if (newStatus === OrderStatus.CONFIRMED) {
+      await createInvoiceByOrderId(orderId);
+    }
 
     revalidatePath("/dashboard/orders");
 

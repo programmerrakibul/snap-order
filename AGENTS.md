@@ -43,6 +43,7 @@ src/
 │   ├── user.action.ts           # Auth, profile, verification, password reset
 │   ├── product.action.ts        # Product CRUD + variants + images (edit/manage)
 │   ├── category.action.ts       # Category CRUD + slug handling
+│   ├── invoice.action.ts        # Invoice generation + PDF receipts (pdfkit)
 │   ├── order.action.ts          # Order CRUD + status management
 │   ├── restock.action.ts        # Restock approve/cancel
 │   ├── overview.action.ts       # Dashboard stats
@@ -63,6 +64,7 @@ src/
 │   │   ├── checkout/            # Single-item checkout (variant chips + order form)
 │   │   ├── categories/          # Admin only — category CRUD
 │   │   ├── orders/              # Order listing
+│   │   ├── invoices/            # User only — receipts with PDF download
 │   │   ├── customers/           # Admin only
 │   │   ├── profile/             # User profile
 │   │   └── restock-products/    # Admin only — pending + detail
@@ -72,11 +74,13 @@ src/
 │   ├── emails/                  # React Email templates
 │   ├── forms/                   # Client forms (signin, signup, add-product, variant-fields, etc.)
 │   ├── modals/                  # Dialog components (OTP, order, detail, etc.)
+│   ├── invoices/                # Invoice card + download receipt button
 │   ├── restock/                 # Restock request detail
 │   ├── home/                    # Homepage sections (hero, features, workflow, roles)
 │   ├── shared/                  # Container, Navbar, Footer, DataTable, Sidebar, SlugInput, ImageUpload
 │   ├── tables/                  # Products, Orders, Customers, Categories, Restocks tables
 │   └── ui/                      # 25 shadcn/ui primitives
+├── assets/fonts/                # PDF fonts (NotoSansBengali for the ৳ glyph)
 ├── hooks/                       # useUserData, use-mobile
 ├── lib/                         # Core utilities
 │   ├── prisma.ts                # Singleton Prisma client
@@ -85,7 +89,7 @@ src/
 │   ├── otp.ts                   # 6-digit OTP with bcrypt hashing
 │   ├── email.tsx                # Nodemailer transporter + send
 │   ├── slug.ts                  # generateSlug()/uniqueSlug()/SLUG_REGEX
-│   ├── constants.ts             # Sidebar items, status config, token ages
+│   ├── constants.ts             # Sidebar items (allowedRoles), status config, token ages
 │   ├── constants-server.ts      # Protected paths, cookie options (server-only)
 │   ├── env.ts                   # Zod-validated env accessor
 │   └── error.ts                 # Error response formatter
@@ -107,6 +111,7 @@ src/
 | **ProductVariant**     | id, sku(unique, Char(12)), attributes(Json), stock, minThreshold(10), maxThreshold(100), costPrice, originalPrice, discountAmount/Type/Value, supplierId, lastRestockedAt                                                                                                                                                    | product(cascade), items[](OrderItem), restockItems[](RestockRequestItem), supplier(User) |
 | **Order**              | id, orderNumber(unique), status(PENDING/CONFIRMED/SHIPPED/DELIVERED/CANCELLED), totalAmount(Decimal), customerId, shippingName, shippingPhone(Char 11), shippingAddress/Area/Thana/District/Division, shippingPostalCode?, shippingNote?, customerNote?, confirmedAt/shippedAt/deliveredAt/cancelledAt?, cancellationReason? | customer(User), items[](OrderItem, cascade)                                              |
 | **OrderItem**          | id, orderId, productVariantId, quantity, totalPrice(Decimal), discountAmount?                                                                                                                                                                                                                                                | order(cascade), productVariant                                                           |
+| **Invoice**            | id, totalAmount(Decimal), discountAmount?, customerId, orderId(unique, one invoice per order)                                                                                                                                                                                                                               | customer(User, cascade), order(cascade)                                                 |
 | **RestockRequest**     | id, status(PENDING/APPROVED/CANCELLED), stockedById, approvedAt, cancelledAt                                                                                                                                                                                                                                                 | stockedBy(User), items[](RestockRequestItem, cascade)                                    |
 | **RestockRequestItem** | id, restockRequestId, productVariantId, quantity                                                                                                                                                                                                                                                                             | productVariant, restockRequest(cascade)                                                  |
 
@@ -186,6 +191,26 @@ dashboard).
 - Order is placed via `createOrder` with `items[]` (single slot for the chosen
   variant)
 
+### Invoices & Receipts
+
+- **Generation**: when an admin confirms an order (`updateOrderStatusById` →
+  CONFIRMED), `createInvoiceByOrderId` is invoked — idempotent (one invoice per
+  order, `orderId @unique`), only for confirmed orders, sums item discounts
+- **User page**: `/dashboard/invoices` is **user-only**; admins are redirected
+  to `/forbidden`. It lists the user's invoices as responsive cards (order
+  number, total, status badge, recipient, issue date, item count) with a
+  "Download Receipt" button
+- **PDF receipts**: `downloadInvoicePdf` returns the PDF as a base64 string;
+  the client builds a Blob and triggers the browser download
+- **pdfkit layout**: `serverExternalPackages: ["pdfkit"]` in `next.config.ts`.
+  The invoice embeds the platform logo (Cloudinary), slogan, gratitude text,
+  billed-to/order columns, line-item table, totals, and a footer pinned to the
+  last page. The Taka symbol requires an embedded Unicode TTF
+  (`src/assets/fonts/NotoSansBengali-Regular.ttf`, included in the trace via
+  `outputFileTracingIncludes`) — never use pdfkit's built-in Helvetica for `৳`
+- Native pdfkit APIs are NOT supported (no `doc.image`, `doc.registerFont` of a
+  path string on serverless) — fonts are read as Buffers from `process.cwd()`
+
 ### Restock
 
 - **Automated**: Vercel cron (`0 0 * * *`) hits `/api/restock-check` — creates
@@ -259,4 +284,9 @@ npx prisma generate        # Regenerate Prisma client
 - Prices render in Bangladeshi Taka (৳/BDT) — via `Intl.NumberFormat` with
   `currency: "BDT", currencyDisplay: "narrowSymbol"` or a literal `৳` prefix,
   and `IconCurrencyTaka` (never `$` / `IconCurrencyDollar`)
+- Sidebar items in `lib/constants.ts` are role-filtered via `allowedRoles:
+  Role[]` (renamed from the legacy `adminOnly`) and rendered by
+  `app-sidebar.tsx` using `item.allowedRoles?.includes(user.role)`
+- pdfkit's built-in WinAnsi fonts cannot render `৳` — always register the
+  bundled `Noto Sans Bengali` TTF (`src/assets/fonts/...`) before writing money
 - BD address options come from `@olism/bd-geo` (never hand-written address data)

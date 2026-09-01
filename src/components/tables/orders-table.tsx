@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import DeleteOrderModal from "@/components/modals/delete-order-modal";
+import OrderDetailModal from "@/components/modals/order-detail-modal";
+import UpdateOrderStatusModal from "@/components/modals/update-order-status-modal";
+import {
+  DataTable,
+  type DataTableColumn,
+} from "@/components/shared/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,23 +15,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  DataTable,
-  type DataTableColumn,
-} from "@/components/shared/data-table";
-import useUserData from "@/hooks/useUserData";
 import { OrderStatus, Role } from "@/generated/prisma/enums";
-import {
-  IconEye,
-  IconDotsVerticalFilled,
-  IconTrash,
-  IconEdit,
-} from "@tabler/icons-react";
+import useUserData from "@/hooks/useUserData";
 import { STATUS_CONFIG } from "@/lib/constants";
-import OrderDetailModal from "@/components/modals/order-detail-modal";
-import DeleteOrderModal from "@/components/modals/delete-order-modal";
-import UpdateOrderStatusModal from "@/components/modals/update-order-status-modal";
-import { TOrder, TOrderItem } from "@/types/order.interface";
+import { TOrder } from "@/types/order.interface";
+import {
+  IconDotsVerticalFilled,
+  IconEdit,
+  IconEye,
+  IconTrash,
+} from "@tabler/icons-react";
+import { useCallback, useState } from "react";
 
 interface OrdersTableProps {
   orders: TOrder[];
@@ -69,9 +69,7 @@ export default function OrdersTable({
       header: "Recipient",
       accessor: "shippingName",
       cell: (value) => (
-        <span className="text-muted-foreground">
-          {String(value)}
-        </span>
+        <span className="text-muted-foreground">{String(value)}</span>
       ),
     },
     {
@@ -83,20 +81,6 @@ export default function OrdersTable({
         </span>
       ),
       className: "text-right",
-    },
-    {
-      header: "Items",
-      accessor: "items",
-      cell: (value) => {
-        const items = value as TOrderItem[];
-
-        return (
-          <span className="text-muted-foreground">
-            {items.length} item{items.length !== 1 ? "s" : ""}
-          </span>
-        );
-      },
-      className: "text-center",
     },
     {
       header: "Date",

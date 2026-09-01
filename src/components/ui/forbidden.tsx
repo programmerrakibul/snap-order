@@ -3,11 +3,9 @@
 import Container from "@/components/shared/container";
 import { Button } from "@/components/ui/button";
 import { IconAlertTriangle, IconHome, IconLock } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const ForbiddenComponent = () => {
-  const router = useRouter();
-
   return (
     <>
       <section className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 via-slate-100 to-red-50 py-10 md:py-16">
@@ -89,14 +87,15 @@ const ForbiddenComponent = () => {
 
                   {/* Button */}
                   <div className="flex justify-center">
-                    <Button
-                      size={"lg"}
-                      variant={"destructive"}
-                      onClick={() => router.replace("/dashboard")}
-                      className="group font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
-                    >
-                      <IconHome className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                      Back to Dashboard
+                    <Button size={"lg"} variant={"destructive"} asChild>
+                      <Link
+                        href={"/dashboard"}
+                        replace
+                        className="flex items-center gap-2"
+                      >
+                        <IconHome className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                        Back to Dashboard
+                      </Link>
                     </Button>
                   </div>
                 </div>
@@ -105,65 +104,6 @@ const ForbiddenComponent = () => {
           </div>
         </Container>
       </section>
-
-      <style>{`
-        @keyframes slideInDown {
-          from {
-            opacity: 0;
-            transform: translateY(-30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes pulse-glow {
-          0%, 100% {
-            box-shadow: 0 0 20px rgba(220, 38, 38, 0.5), 0 0 40px rgba(220, 38, 38, 0.2);
-          }
-          50% {
-            box-shadow: 0 0 30px rgba(220, 38, 38, 0.7), 0 0 60px rgba(220, 38, 38, 0.3);
-          }
-        }
-
-        @keyframes float-icon {
-          0%, 100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-10px);
-          }
-        }
-
-        @keyframes shake {
-          0%, 100% {
-            transform: translateX(0);
-          }
-          25% {
-            transform: translateX(-5px);
-          }
-          75% {
-            transform: translateX(5px);
-          }
-        }
-
-        .animate-slide-in {
-          animation: slideInDown 0.6s ease-out;
-        }
-
-        .animate-pulse-glow {
-          animation: pulse-glow 2.5s ease-in-out infinite;
-        }
-
-        .animate-float {
-          animation: float-icon 3s ease-in-out infinite;
-        }
-
-        .animate-shake {
-          animation: shake 0.5s ease-in-out;
-        }
-      `}</style>
     </>
   );
 };
