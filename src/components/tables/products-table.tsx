@@ -1,6 +1,5 @@
 "use client";
 
-import OrderProductModal from "@/components/modals/order-product-modal";
 import ProductDetailModal from "@/components/modals/product-detail-modal";
 import {
   DataTable,
@@ -41,7 +40,7 @@ export default function ProductsTable({ products }: ProductsTableProps) {
       accessor: "price",
       cell: (value) => (
         <span className="font-semibold text-primary">
-          ${Number(value).toFixed(2)}
+          ৳{Number(value).toFixed(2)}
         </span>
       ),
       className: "text-right",
@@ -113,20 +112,22 @@ export default function ProductsTable({ products }: ProductsTableProps) {
             </>
           )}
 
-          {user?.role === Role.USER && (
-            <OrderProductModal
-              product={row}
-              Trigger={
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  title="Order Product"
-                  className="h-8 w-8 p-0 hover:bg-blue-500/10"
-                >
-                  <IconShoppingCart className="h-4 w-4" />
-                </Button>
-              }
-            />
+          {user?.role === Role.USER && row.variants.length > 0 && (
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              title="Order Product"
+              className="h-8 w-8 p-0 hover:bg-blue-500/10"
+            >
+              <Link
+                href={`/dashboard/checkout?variantId=${
+                  row.primaryVariantId ?? row.variants[0].id
+                }`}
+              >
+                <IconShoppingCart className="h-4 w-4" />
+              </Link>
+            </Button>
           )}
         </div>
       ),

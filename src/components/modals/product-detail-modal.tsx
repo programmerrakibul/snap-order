@@ -56,7 +56,7 @@ function variantPrice(variant: TProductVariant) {
     return (
       <>
         <span className="text-lg font-bold">
-          ${variant.originalPrice.toFixed(2)}
+          ৳{variant.originalPrice.toFixed(2)}
         </span>
       </>
     );
@@ -72,15 +72,15 @@ function variantPrice(variant: TProductVariant) {
   return (
     <span className="flex flex-wrap items-baseline gap-x-2">
       <span className="text-lg font-bold text-primary">
-        ${discounted.toFixed(2)}
+        ৳{discounted.toFixed(2)}
       </span>
       <span className="text-sm text-muted-foreground line-through">
-        ${variant.originalPrice.toFixed(2)}
+        ৳{variant.originalPrice.toFixed(2)}
       </span>
       <Badge variant="secondary">
         {type === "PERCENTAGE"
           ? `${variant.discountValue}% off`
-          : `-$${variant.discountValue!.toFixed(2)}`}
+          : `-৳${variant.discountValue!.toFixed(2)}`}
       </Badge>
     </span>
   );
@@ -198,7 +198,7 @@ export default function ProductDetailModal({
                   Price
                 </label>
                 <p className="text-2xl font-bold text-primary mt-1">
-                  ${product.price.toFixed(2)}
+                  ৳{product.price.toFixed(2)}
                 </p>
               </div>
 
@@ -295,7 +295,7 @@ export default function ProductDetailModal({
                             Cost Price
                           </label>
                           <p className="font-medium mt-0.5">
-                            ${variant.costPrice.toFixed(2)}
+                            ৳{variant.costPrice.toFixed(2)}
                           </p>
                         </div>
                       </div>

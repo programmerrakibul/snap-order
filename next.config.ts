@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  serverExternalPackages: ["pdfkit"],
+  outputFileTracingIncludes: {
+    "/dashboard/invoices/page": ["./src/assets/fonts/**/*"],
+  },
   cacheComponents: true,
   experimental: {
     serverActions: {

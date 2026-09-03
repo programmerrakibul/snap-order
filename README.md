@@ -18,10 +18,13 @@ controls.
 
 ### How It Works
 
-1. **Users** register, verify their email, browse available products, place
-   orders, and track order status.
+1. **Users** register, verify their email, browse available products, complete a
+   single-variant checkout with a Bangladesh shipping address
+   (division/district/thana), track order status, and download PDF receipts once
+   an order is confirmed.
 2. **Admins** manage the product catalog, oversee all customer orders, update
-   order statuses, and approve/cancel automated restock requests.
+   order statuses, approve/cancel automated restock requests, and generate
+   invoices (receipts) when confirming orders.
 3. **Restock automation** runs daily via a cron job — when product stock drops
    below the minimum threshold, a restock request is automatically generated for
    admin review.
@@ -42,6 +45,7 @@ controls.
 | Validation | [Zod](https://zod.dev/)                                                                                            |
 | Email      | [Nodemailer](https://nodemailer.com/) (Gmail OAuth2) + [React Email](https://react.email/)                         |
 | Media      | [Cloudinary](https://cloudinary.com/)                                                                              |
+| PDF        | [pdfkit](https://pdfkit.org/) (embedded Unicode fonts)                                                             |
 | Deployment | [Vercel](https://vercel.com/)                                                                                      |
 
 ---
@@ -61,8 +65,16 @@ controls.
   each with its own SKU, stock, thresholds, prices, and structured attributes
 - **Category Management**: Admin CRUD for categories with auto-generated slugs
   and image upload
-- **Order Processing**: Place orders with atomic stock deduction, status
-  tracking (PENDING → CONFIRMED → SHIPPED → DELIVERED)
+- **Checkout Page**: Single-item checkout with variant selection chips, quantity
+  controls, atomic stock deduction, and a cascading Bangladesh address form
+  (division → district → thana/upazila via `@olism/bd-geo`); prices shown in
+  Bangladeshi Taka (৳)
+- **Order Processing**: Status tracking with lifecycle timestamps (PENDING →
+  CONFIRMED → SHIPPED → DELIVERED), plus cancellations with a reason
+- **Invoices & PDF Receipts**: Confirming an order auto-generates a user-only
+  invoice (cards with status, recipient, and amount) and a downloadable
+  pdfkit receipt with platform logo, slogan, gratitude text, line items, and
+  totals — rendered with an embedded Taka-capable font
 - **Automated Restock**: Daily cron checks stock thresholds, creates pending
   restock requests; admins approve with adjustable quantities
 - **Customer Management**: Admin view of all registered users
@@ -138,13 +150,13 @@ sign in to access the dashboard.
 
 ## Scripts
 
-| Command         | Description                           |
-| --------------- | ------------------------------------- |
-| `npm run dev`   | Start development server on port 3000 |
-| `npm run build` | Create production build               |
-| `npm run start` | Start production server               |
-| `npm run lint`  | Run ESLint                            |
-| `npm run clean` | Remove build artifacts                |
+| Command           | Description                            |
+| ----------------- | -------------------------------------- |
+| `npm run dev`     | Start development server on port 3000  |
+| `npm run build`   | Create production build                |
+| `npm run start`   | Start production server                |
+| `npm run lint`    | Run ESLint                             |
+| `npm run clean`   | Remove build artifacts                 |
 | `npm run db:seed` | Seed demo data (categories + products) |
 
 ---
@@ -155,16 +167,20 @@ sign in to access the dashboard.
 prisma/                         # Database schema, migrations, and seed (10 categories, 20 products)
 src/
 ├── proxy.ts                    # Middleware — auth guard + token refresh
-├── actions/server/             # Server Actions (auth, products, categories, orders, restock)
+├── actions/server/             # Server Actions (auth, products, categories, orders, invoices, restock)
 ├── app/                        # Next.js App Router pages
 │   ├── page.tsx                # Public marketing homepage
 │   ├── auth/                   # Login, registration, forgot password
-│   ├── dashboard/              # Protected pages (overview, products, orders, categories, etc.)
+│   ├── dashboard/              # Protected pages (overview, products, checkout, orders, invoices, etc.)
+│   │   ├── checkout/           # Single-product checkout (`?variantId=`)
+│   │   ├── invoices/           # User-only receipt cards + PDF download
 │   │   └── edit-product/[id]/  # Admin-only product & variant editor
 │   └── api/restock-check/      # Cron endpoint for automated restock
+├── assets/fonts/               # Bundled PDF fonts (NotoSansBengali for the ৳ glyph)
 ├── components/
 │   ├── home/                   # Homepage sections (hero, features, workflow, roles)
 │   ├── shared/                 # Navbar, footer, container, data table, slug input, image upload
+│   ├── invoices/               # Invoice card + download-receipt button
 │   ├── emails/                 # React Email templates
 │   ├── forms/                  # Client form components (incl. variant-fields)
 │   ├── modals/                 # Dialog/modal components
@@ -180,14 +196,20 @@ src/
 
 ## Database Schema
 
-Nine models: **User**, **Category**, **Product**, **ProductImage**,
-**ProductVariant**, **Order**, **OrderItem**, **RestockRequest**,
+Ten models: **User**, **Category**, **Product**, **ProductImage**,
+**ProductVariant**, **Order**, **OrderItem**, **Invoice**, **RestockRequest**,
 **RestockRequestItem** — with full relational mapping for inventory (products
-with variants and categories), orders, and restock workflows. Pricing and stock
-live on product **variants**; orders and restock requests reference variants
-directly. Removed variants are soft-deactivated (`isActive = false`) so order and
-restock history stays intact. The datamodel is split across `prisma/enums/` and
-`prisma/models/`. See `prisma/` for details.
+with variants and categories), orders, payments (invoices), and restock
+workflows. Pricing and stock live on product **variants**; orders and restock
+requests reference variants directly. Orders reference the buying user via
+`customerId`, capture the full Bangladesh shipping details (division, district,
+thana, area, phone, postal code), and record status timestamps (`confirmedAt`,
+`shippedAt`, `deliveredAt`, `cancelledAt`); line items store `totalPrice` plus
+an optional `discountAmount`. Confirming an order creates one linked **Invoice**
+(`orderId @unique`) used for user-facing receipts. Removed variants are
+soft-deactivated (`isActive = false`) so order and restock history stays intact.
+The datamodel is split across `prisma/enums/` and `prisma/models/`. See
+`prisma/` for details.
 
 ---
 
@@ -196,7 +218,10 @@ restock history stays intact. The datamodel is split across `prisma/enums/` and
 Snap Order uses **Next.js Server Actions** for all data operations — there is no
 traditional REST API. The only exception is `GET/POST /api/restock-check` which
 is called by Vercel Cron. All server actions are defined in
-`src/actions/server/` and are callable directly from client components.
+`src/actions/server/` and are callable directly from client components. This
+includes `invoice.action.ts` (auto-generate an invoice on order confirmation,
+list the user's invoices, and return PDF receipts as base64 for client-side
+download).
 
 ---
 

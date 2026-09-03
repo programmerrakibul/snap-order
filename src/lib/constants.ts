@@ -1,16 +1,22 @@
 import {
+  IconCategory,
   IconLayoutDashboard,
-  IconShoppingCart,
-  IconUsers,
-  IconUserCircle,
   IconPackageImport,
   IconPackages,
+  IconReceipt,
   IconReload,
-  IconCategory,
+  IconShoppingCart,
+  IconUserCircle,
+  IconUsers,
 } from "@tabler/icons-react";
 
-import { DiscountType, OrderStatus, ProductStatus } from "@/generated/prisma/enums";
-import { TSideberItem } from "@/types";
+import {
+  DiscountType,
+  OrderStatus,
+  ProductStatus,
+  Role,
+} from "@/generated/prisma/enums";
+import { TSidebarItem } from "@/types";
 
 export const ACCESS_TOKEN_MAX_AGE = 15 * 60;
 export const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60;
@@ -77,49 +83,59 @@ export const DISCOUNT_TYPE_CONFIG: Record<
   },
 };
 
-export const sidebarItems: TSideberItem[] = [
+export const sidebarItems: TSidebarItem[] = [
   {
     title: "Overview",
     href: "/dashboard",
     icon: IconLayoutDashboard,
+    allowedRoles: [Role.ADMIN, Role.USER],
   },
   {
     title: "Add Product",
     href: "/dashboard/add-products",
     icon: IconPackageImport,
-    adminOnly: true,
+    allowedRoles: [Role.ADMIN],
   },
   {
     title: "Products",
     href: "/dashboard/products",
     icon: IconPackages,
+    allowedRoles: [Role.ADMIN, Role.USER],
   },
   {
     title: "Categories",
     href: "/dashboard/categories",
     icon: IconCategory,
-    adminOnly: true,
+    allowedRoles: [Role.ADMIN],
   },
   {
     title: "Re-Stock Products",
     href: "/dashboard/restock-products",
     icon: IconReload,
-    adminOnly: true,
+    allowedRoles: [Role.ADMIN],
   },
   {
     title: "Orders",
     href: "/dashboard/orders",
     icon: IconShoppingCart,
+    allowedRoles: [Role.ADMIN, Role.USER],
+  },
+  {
+    title: "Invoices",
+    href: "/dashboard/invoices",
+    icon: IconReceipt,
+    allowedRoles: [Role.USER],
   },
   {
     title: "Customers",
     href: "/dashboard/customers",
     icon: IconUsers,
-    adminOnly: true,
+    allowedRoles: [Role.ADMIN],
   },
   {
     title: "Profile",
     href: "/dashboard/profile",
     icon: IconUserCircle,
+    allowedRoles: [Role.ADMIN, Role.USER],
   },
 ];

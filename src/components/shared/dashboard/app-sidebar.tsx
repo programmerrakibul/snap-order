@@ -16,7 +16,6 @@ import {
 import ProfileDropdown from "@/components/shared/profile-dropdown";
 import Logo from "@/components/ui/logo";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Role } from "@/generated/prisma/enums";
 import useUserData from "@/hooks/useUserData";
 import { sidebarItems } from "@/lib/constants";
 import Link from "next/link";
@@ -60,7 +59,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </>
               ) : (
                 sidebarItems.map((item) => {
-                  if (item.adminOnly && user?.role !== Role.ADMIN) return null;
+                  if (!item.allowedRoles?.includes(user!.role)) return null;
 
                   return (
                     <SidebarMenuItem key={item.title}>

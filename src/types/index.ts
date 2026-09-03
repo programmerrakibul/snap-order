@@ -1,10 +1,11 @@
+import { Role } from "@/generated/prisma/enums";
 import { TablerIcon } from "@tabler/icons-react";
 
-export type TSideberItem = {
+export type TSidebarItem = {
   title: string;
   href: string;
   icon: TablerIcon;
-  adminOnly?: true;
+  allowedRoles?: Role[];
 };
 
 export type MetricCardProps = {
@@ -15,9 +16,10 @@ export type MetricCardProps = {
   tone: string;
 };
 
+export * from "./category.interface";
+export * from "./invoice.interface";
 export * from "./order.interface";
 export * from "./product.interface";
 export * from "./restock.interface";
 export * from "./token.interface";
 export * from "./user.interface";
-export * from "./category.interface";

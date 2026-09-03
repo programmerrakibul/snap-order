@@ -23,6 +23,7 @@ UI levels.
 | Email           | Nodemailer (Gmail OAuth2) + React Email templates            |
 | Uploads         | Cloudinary                                                   |
 | Validation      | Zod (env vars, inputs, schemas)                              |
+| Geo/Address     | @olism/bd-geo (BD divisions, districts, upazilas)            |
 | Package Manager | npm                                                          |
 
 ---
@@ -42,6 +43,7 @@ src/
 │   ├── user.action.ts           # Auth, profile, verification, password reset
 │   ├── product.action.ts        # Product CRUD + variants + images (edit/manage)
 │   ├── category.action.ts       # Category CRUD + slug handling
+│   ├── invoice.action.ts        # Invoice generation + PDF receipts (pdfkit)
 │   ├── order.action.ts          # Order CRUD + status management
 │   ├── restock.action.ts        # Restock approve/cancel
 │   ├── overview.action.ts       # Dashboard stats
@@ -59,8 +61,10 @@ src/
 │   │   ├── add-products/        # Admin only
 │   │   ├── edit-product/[id]/   # Admin only — edit product + manage variants
 │   │   ├── products/            # Product listing
+│   │   ├── checkout/            # Single-item checkout (variant chips + order form)
 │   │   ├── categories/          # Admin only — category CRUD
 │   │   ├── orders/              # Order listing
+│   │   ├── invoices/            # User only — receipts with PDF download
 │   │   ├── customers/           # Admin only
 │   │   ├── profile/             # User profile
 │   │   └── restock-products/    # Admin only — pending + detail
@@ -70,11 +74,13 @@ src/
 │   ├── emails/                  # React Email templates
 │   ├── forms/                   # Client forms (signin, signup, add-product, variant-fields, etc.)
 │   ├── modals/                  # Dialog components (OTP, order, detail, etc.)
+│   ├── invoices/                # Invoice card + download receipt button
 │   ├── restock/                 # Restock request detail
 │   ├── home/                    # Homepage sections (hero, features, workflow, roles)
 │   ├── shared/                  # Container, Navbar, Footer, DataTable, Sidebar, SlugInput, ImageUpload
 │   ├── tables/                  # Products, Orders, Customers, Categories, Restocks tables
 │   └── ui/                      # 25 shadcn/ui primitives
+├── assets/fonts/                # PDF fonts (NotoSansBengali for the ৳ glyph)
 ├── hooks/                       # useUserData, use-mobile
 ├── lib/                         # Core utilities
 │   ├── prisma.ts                # Singleton Prisma client
@@ -83,7 +89,7 @@ src/
 │   ├── otp.ts                   # 6-digit OTP with bcrypt hashing
 │   ├── email.tsx                # Nodemailer transporter + send
 │   ├── slug.ts                  # generateSlug()/uniqueSlug()/SLUG_REGEX
-│   ├── constants.ts             # Sidebar items, status config, token ages
+│   ├── constants.ts             # Sidebar items (allowedRoles), status config, token ages
 │   ├── constants-server.ts      # Protected paths, cookie options (server-only)
 │   ├── env.ts                   # Zod-validated env accessor
 │   └── error.ts                 # Error response formatter
@@ -96,17 +102,18 @@ src/
 
 ## Database Models
 
-| Model                  | Key Fields                                                                                                                                                                | Relations                                                                                |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| **User**               | id, email, password, role (USER/ADMIN), isVerified, isActive, verification/reset OTP fields, lastLoggedIn                                                                 | orders[], productVariants[](supplier), restockRequests[](stockedBy)                      |
-| **Category**           | id, name, slug(unique), image                                                                                                                                             | products[]                                                                               |
-| **Product**            | id, name, description, brand, tags(String[]), slug(unique), status(DRAFT/ACTIVE/ARCHIVED/OUT_OF_STOCK), isFeatured, categoryId                                            | category, images[](ProductImage), variants[](ProductVariant)                             |
-| **ProductImage**       | id, url, altText, isPrimary, productId (cascade DELETE)                                                                                                                   | product                                                                                  |
-| **ProductVariant**     | id, sku(unique, Char(12)), attributes(Json), stock, minThreshold(10), maxThreshold(100), costPrice, originalPrice, discountAmount/Type/Value, supplierId, lastRestockedAt | product(cascade), items[](OrderItem), restockItems[](RestockRequestItem), supplier(User) |
-| **Order**              | id, orderNumber(unique), status(PENDING/CONFIRMED/SHIPPED/DELIVERED/CANCELLED), totalAmount(Decimal), userId, shippingAddress                                             | user, items[](OrderItem, cascade)                                                        |
-| **OrderItem**          | id, orderId, productVariantId, quantity, unitPrice(Decimal)                                                                                                               | order(cascade), productVariant                                                           |
-| **RestockRequest**     | id, status(PENDING/APPROVED/CANCELLED), stockedById, approvedAt, cancelledAt                                                                                              | stockedBy(User), items[](RestockRequestItem, cascade)                                    |
-| **RestockRequestItem** | id, restockRequestId, productVariantId, quantity                                                                                                                          | productVariant, restockRequest(cascade)                                                  |
+| Model                  | Key Fields                                                                                                                                                                                                                                                                                                                   | Relations                                                                                |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **User**               | id, email, password, role (USER/ADMIN), isVerified, isActive, verification/reset OTP fields, lastLoggedIn                                                                                                                                                                                                                    | orders[](customer), productVariants[](supplier), restockRequests[](stockedBy)            |
+| **Category**           | id, name, slug(unique), image                                                                                                                                                                                                                                                                                                | products[]                                                                               |
+| **Product**            | id, name, description, brand, tags(String[]), slug(unique), status(DRAFT/ACTIVE/ARCHIVED/OUT_OF_STOCK), isFeatured, categoryId                                                                                                                                                                                               | category, images[](ProductImage), variants[](ProductVariant)                             |
+| **ProductImage**       | id, url, altText, isPrimary, productId (cascade DELETE)                                                                                                                                                                                                                                                                      | product                                                                                  |
+| **ProductVariant**     | id, sku(unique, Char(12)), attributes(Json), stock, minThreshold(10), maxThreshold(100), costPrice, originalPrice, discountAmount/Type/Value, supplierId, lastRestockedAt                                                                                                                                                    | product(cascade), items[](OrderItem), restockItems[](RestockRequestItem), supplier(User) |
+| **Order**              | id, orderNumber(unique), status(PENDING/CONFIRMED/SHIPPED/DELIVERED/CANCELLED), totalAmount(Decimal), customerId, shippingName, shippingPhone(Char 11), shippingAddress/Area/Thana/District/Division, shippingPostalCode?, shippingNote?, customerNote?, confirmedAt/shippedAt/deliveredAt/cancelledAt?, cancellationReason? | customer(User), items[](OrderItem, cascade)                                              |
+| **OrderItem**          | id, orderId, productVariantId, quantity, totalPrice(Decimal), discountAmount?                                                                                                                                                                                                                                                | order(cascade), productVariant                                                           |
+| **Invoice**            | id, totalAmount(Decimal), discountAmount?, customerId, orderId(unique, one invoice per order)                                                                                                                                                                                                                               | customer(User, cascade), order(cascade)                                                 |
+| **RestockRequest**     | id, status(PENDING/APPROVED/CANCELLED), stockedById, approvedAt, cancelledAt                                                                                                                                                                                                                                                 | stockedBy(User), items[](RestockRequestItem, cascade)                                    |
+| **RestockRequestItem** | id, restockRequestId, productVariantId, quantity                                                                                                                                                                                                                                                                             | productVariant, restockRequest(cascade)                                                  |
 
 ---
 
@@ -145,11 +152,11 @@ dashboard).
 
 ### Products & Variants
 
-- Admin creates products via `/dashboard/add-products` and edits/extends them via
-  `/dashboard/edit-product/[id]` (pencil action in the products table)
-- A product supports **multiple variants** — each with its own unique SKU, stock,
-  min/max thresholds, cost/selling prices, discount, and structured attribute
-  key/value rows (serialized to the `attributes` Json column)
+- Admin creates products via `/dashboard/add-products` and edits/extends them
+  via `/dashboard/edit-product/[id]` (pencil action in the products table)
+- A product supports **multiple variants** — each with its own unique SKU,
+  stock, min/max thresholds, cost/selling prices, discount, and structured
+  attribute key/value rows (serialized to the `attributes` Json column)
 - **Images**: multiple per product (min 1, first is primary); uploaded via
   Cloudinary `ImageUpload` with instant preview, replaced wholesale on edit
 - Removed variants are **deactivated** (`isActive = false`), never hard-deleted,
@@ -162,8 +169,47 @@ dashboard).
 
 - Created via `createOrder` server action inside a Prisma `$transaction`
 - Validates stock, deducts inventory atomically with order creation
-- Status lifecycle: PENDING → CONFIRMED → SHIPPED → DELIVERED (admin-managed)
+- Status lifecycle: PENDING → CONFIRMED → SHIPPED → DELIVERED (admin-managed);
+  `updateOrderStatusById` records timestamps — `confirmedAt`, `shippedAt`,
+  `deliveredAt`, plus `cancelledAt` and `cancellationReason` on cancel
+- Orders reference a `customer` (`customerId`) and store the full Bangladesh
+  shipping address (division, district, thana, area, phone, postal code, notes)
 - Users can delete only their own PENDING orders; admins can delete any
+
+### Checkout
+
+- Single-item checkout at `/dashboard/checkout?variantId=...`; the entry point
+  is the cart icon in the products table (defaults to
+  `primaryVariantId ?? variants[0].id`)
+- Multi-variant products render chip links to switch the variant via the URL
+  param (server re-render); out-of-stock variants are disabled
+- `getCheckoutData(variantId)` returns the product name, all active variants,
+  and the selected variant
+- Shipping address uses cascading Division → District → Thana selects populated
+  from `@olism/bd-geo` and driven by RHF `useWatch`; values stored as English
+  names
+- Order is placed via `createOrder` with `items[]` (single slot for the chosen
+  variant)
+
+### Invoices & Receipts
+
+- **Generation**: when an admin confirms an order (`updateOrderStatusById` →
+  CONFIRMED), `createInvoiceByOrderId` is invoked — idempotent (one invoice per
+  order, `orderId @unique`), only for confirmed orders, sums item discounts
+- **User page**: `/dashboard/invoices` is **user-only**; admins are redirected
+  to `/forbidden`. It lists the user's invoices as responsive cards (order
+  number, total, status badge, recipient, issue date, item count) with a
+  "Download Receipt" button
+- **PDF receipts**: `downloadInvoicePdf` returns the PDF as a base64 string;
+  the client builds a Blob and triggers the browser download
+- **pdfkit layout**: `serverExternalPackages: ["pdfkit"]` in `next.config.ts`.
+  The invoice embeds the platform logo (Cloudinary), slogan, gratitude text,
+  billed-to/order columns, line-item table, totals, and a footer pinned to the
+  last page. The Taka symbol requires an embedded Unicode TTF
+  (`src/assets/fonts/NotoSansBengali-Regular.ttf`, included in the trace via
+  `outputFileTracingIncludes`) — never use pdfkit's built-in Helvetica for `৳`
+- Native pdfkit APIs are NOT supported (no `doc.image`, `doc.registerFont` of a
+  path string on serverless) — fonts are read as Buffers from `process.cwd()`
 
 ### Restock
 
@@ -235,3 +281,12 @@ npx prisma generate        # Regenerate Prisma client
 - Always prefer editing existing files over creating new ones
 - Match existing patterns (import style, component structure, naming
   conventions)
+- Prices render in Bangladeshi Taka (৳/BDT) — via `Intl.NumberFormat` with
+  `currency: "BDT", currencyDisplay: "narrowSymbol"` or a literal `৳` prefix,
+  and `IconCurrencyTaka` (never `$` / `IconCurrencyDollar`)
+- Sidebar items in `lib/constants.ts` are role-filtered via `allowedRoles:
+  Role[]` (renamed from the legacy `adminOnly`) and rendered by
+  `app-sidebar.tsx` using `item.allowedRoles?.includes(user.role)`
+- pdfkit's built-in WinAnsi fonts cannot render `৳` — always register the
+  bundled `Noto Sans Bengali` TTF (`src/assets/fonts/...`) before writing money
+- BD address options come from `@olism/bd-geo` (never hand-written address data)

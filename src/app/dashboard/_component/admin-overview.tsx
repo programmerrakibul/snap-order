@@ -5,7 +5,7 @@ import {
   IconBox,
   IconChartBar,
   IconChecklist,
-  IconCurrencyDollar,
+  IconCurrencyTaka,
   IconPackage,
   IconRefresh,
   IconShoppingCart,
@@ -24,7 +24,8 @@ import { BarChart } from "@/components/ui/bar-chart";
 
 const money = new Intl.NumberFormat("en-US", {
   style: "currency",
-  currency: "USD",
+  currency: "BDT",
+  currencyDisplay: "narrowSymbol",
   maximumFractionDigits: 0,
 });
 
@@ -53,7 +54,7 @@ const AdminOverview = async () => {
               title="7-day revenue"
               value={money.format(summary.totalRevenue)}
               detail={`${number.format(summary.totalOrders)} orders captured`}
-              icon={IconCurrencyDollar}
+              icon={IconCurrencyTaka}
               tone="bg-emerald-500/10 text-emerald-600"
             />
             <MetricCard
@@ -96,7 +97,7 @@ const AdminOverview = async () => {
                 </Badge>
               </CardHeader>
               <CardContent>
-                <BarChart data={revenueByDay} valuePrefix="$" />
+                <BarChart data={revenueByDay} valuePrefix="৳" />
               </CardContent>
             </Card>
 

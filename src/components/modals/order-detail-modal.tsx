@@ -16,7 +16,7 @@ import { Role } from "@/generated/prisma/enums";
 import useUserData from "@/hooks/useUserData";
 import { STATUS_CONFIG } from "@/lib/constants";
 import { TOrder } from "@/types/order.interface";
-import { IconEye } from "@tabler/icons-react";
+import { IconEye, IconPhone, IconUser, IconMapPin } from "@tabler/icons-react";
 
 interface OrderDetailModalProps {
   order: TOrder;
@@ -31,6 +31,17 @@ export default function OrderDetailModal({
   const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
   const { user } = useUserData();
   const isAdmin = user?.role === Role.ADMIN;
+
+  const fullAddress = [
+    order.shippingAddress,
+    order.shippingArea,
+    order.shippingThana,
+    order.shippingDistrict,
+    order.shippingDivision,
+    order.shippingPostalCode,
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   return (
     <Dialog>
@@ -92,7 +103,7 @@ export default function OrderDetailModal({
                   Total Amount
                 </label>
                 <p className="text-2xl font-bold text-primary mt-1">
-                  ${order.totalAmount.toFixed(2)}
+                  ৳{order.totalAmount.toFixed(2)}
                 </p>
               </div>
               <div>
@@ -110,11 +121,14 @@ export default function OrderDetailModal({
               {isAdmin && (
                 <>
                   <div>
-                    <label className="text-sm font-semibold text-muted-foreground">
-                      Customer Name
-                    </label>
+                    <div className="flex items-center gap-2">
+                      <IconUser className="h-4 w-4 text-muted-foreground" />
+                      <label className="text-sm font-semibold text-muted-foreground">
+                        Customer Name
+                      </label>
+                    </div>
                     <p className="text-sm text-foreground mt-2 leading-relaxed p-3 bg-muted rounded-md">
-                      {order.user.name || "Unnamed customer"}
+                      {order.customer.name || "Unnamed customer"}
                     </p>
                   </div>
                   <div>
@@ -122,21 +136,83 @@ export default function OrderDetailModal({
                       Customer Email
                     </label>
                     <p className="text-sm text-foreground mt-2 leading-relaxed p-3 bg-muted rounded-md break-all">
-                      {order.user.email}
+                      {order.customer.email}
                     </p>
                   </div>
                 </>
               )}
 
-              {/* Shipping Address */}
+              {/* Recipient */}
               <div>
-                <label className="text-sm font-semibold text-muted-foreground">
-                  Shipping Address
-                </label>
+                <div className="flex items-center gap-2">
+                  <IconUser className="h-4 w-4 text-muted-foreground" />
+                  <label className="text-sm font-semibold text-muted-foreground">
+                    Recipient
+                  </label>
+                </div>
                 <p className="text-sm text-foreground mt-2 leading-relaxed p-3 bg-muted rounded-md">
-                  {order.shippingAddress}
+                  {order.shippingName}
                 </p>
               </div>
+
+              {/* Phone */}
+              <div>
+                <div className="flex items-center gap-2">
+                  <IconPhone className="h-4 w-4 text-muted-foreground" />
+                  <label className="text-sm font-semibold text-muted-foreground">
+                    Phone
+                  </label>
+                </div>
+                <p className="text-sm text-foreground mt-2 leading-relaxed p-3 bg-muted rounded-md">
+                  {order.shippingPhone}
+                </p>
+              </div>
+
+              {/* Shipping Address */}
+              <div>
+                <div className="flex items-center gap-2">
+                  <IconMapPin className="h-4 w-4 text-muted-foreground" />
+                  <label className="text-sm font-semibold text-muted-foreground">
+                    Shipping Address
+                  </label>
+                </div>
+                <p className="text-sm text-foreground mt-2 leading-relaxed p-3 bg-muted rounded-md">
+                  {fullAddress}
+                </p>
+              </div>
+
+              {order.shippingNote && (
+                <div>
+                  <label className="text-sm font-semibold text-muted-foreground">
+                    Shipping Note
+                  </label>
+                  <p className="text-sm text-foreground mt-2 leading-relaxed p-3 bg-muted rounded-md">
+                    {order.shippingNote}
+                  </p>
+                </div>
+              )}
+
+              {order.customerNote && (
+                <div>
+                  <label className="text-sm font-semibold text-muted-foreground">
+                    Customer Note
+                  </label>
+                  <p className="text-sm text-foreground mt-2 leading-relaxed p-3 bg-muted rounded-md">
+                    {order.customerNote}
+                  </p>
+                </div>
+              )}
+
+              {order.status === "CANCELLED" && order.cancellationReason && (
+                <div>
+                  <label className="text-sm font-semibold text-muted-foreground">
+                    Cancellation Reason
+                  </label>
+                  <p className="text-sm text-foreground mt-2 leading-relaxed p-3 bg-muted rounded-md">
+                    {order.cancellationReason}
+                  </p>
+                </div>
+              )}
             </div>
 
             <Separator />
@@ -158,13 +234,18 @@ export default function OrderDetailModal({
                           {item.productName} ({item.variantSku})
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Qty: {item.quantity} × ${item.unitPrice.toFixed(2)}
+                          Qty: {item.quantity} × ৳{item.totalPrice.toFixed(2)}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="font-semibold text-sm">
-                          ${(item.quantity * item.unitPrice).toFixed(2)}
+                          ৳{item.totalPrice.toFixed(2)}
                         </p>
+                        {item.discountAmount ? (
+                          <p className="text-xs text-muted-foreground">
+                            Discount: -৳{item.discountAmount.toFixed(2)}
+                          </p>
+                        ) : null}
                       </div>
                     </div>
                   ))
@@ -208,6 +289,70 @@ export default function OrderDetailModal({
                   })}
                 </p>
               </div>
+              {order.confirmedAt && (
+                <div>
+                  <label className="text-sm font-semibold text-muted-foreground">
+                    Confirmed At
+                  </label>
+                  <p className="text-xs sm:text-sm text-foreground mt-1">
+                    {new Date(order.confirmedAt).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+              )}
+              {order.shippedAt && (
+                <div>
+                  <label className="text-sm font-semibold text-muted-foreground">
+                    Shipped At
+                  </label>
+                  <p className="text-xs sm:text-sm text-foreground mt-1">
+                    {new Date(order.shippedAt).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+              )}
+              {order.deliveredAt && (
+                <div>
+                  <label className="text-sm font-semibold text-muted-foreground">
+                    Delivered At
+                  </label>
+                  <p className="text-xs sm:text-sm text-foreground mt-1">
+                    {new Date(order.deliveredAt).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+              )}
+              {order.status === "CANCELLED" && order.cancelledAt && (
+                <div>
+                  <label className="text-sm font-semibold text-muted-foreground">
+                    Cancelled At
+                  </label>
+                  <p className="text-xs sm:text-sm text-foreground mt-1">
+                    {new Date(order.cancelledAt).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </ScrollArea>

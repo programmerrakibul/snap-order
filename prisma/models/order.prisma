@@ -1,18 +1,36 @@
 model Order {
-  id              String      @id @default(cuid())
-  orderNumber     String      @unique
-  status          OrderStatus @default(PENDING)
-  totalAmount     Decimal     @db.Decimal(10, 2)
-  userId          String
-  shippingAddress String
+  id          String      @id @default(cuid())
+  orderNumber String      @unique
+  status      OrderStatus @default(PENDING)
+  totalAmount Decimal     @db.Decimal(12, 2)
 
-  user  User        @relation(fields: [userId], references: [id])
-  items OrderItem[]
+  shippingName      String
+  shippingPhone      String @db.Char(11)
+  shippingAddress    String
+  shippingArea       String
+  shippingThana      String
+  shippingDistrict   String
+  shippingDivision   String
+  shippingPostalCode String?
+  shippingNote          String?
+
+  customerId   String
+  customer     User        @relation(fields: [customerId], references: [id])
+  customerNote String?
+  items        OrderItem[]
+  invoice      Invoice?
+
+  cancelledAt        DateTime?
+  cancellationReason String?
+  confirmedAt        DateTime?
+  shippedAt          DateTime?
+  deliveredAt        DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
   @@index([createdAt])
   @@index([status])
-  @@index([userId])
+  @@index([customerId])
+  @@index([shippingPhone])
 }
